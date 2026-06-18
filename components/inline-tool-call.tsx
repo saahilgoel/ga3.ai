@@ -12,7 +12,17 @@ type ToolPart = {
   errorText?: string;
 };
 
-export function InlineToolCall({ part }: { part: ToolPart }) {
+export function InlineToolCall({
+  part,
+  id,
+  onOpen,
+  active,
+}: {
+  part: ToolPart;
+  id?: string;
+  onOpen?: (id: string) => void;
+  active?: boolean;
+}) {
   const toolName = part.type.replace(/^tool-/, "");
   const running = part.state === "input-streaming" || part.state === "input-available";
   const [open, setOpen] = useState(false);
@@ -20,10 +30,17 @@ export function InlineToolCall({ part }: { part: ToolPart }) {
   const inputSummary = summarizeInput(part.input);
 
   return (
-    <div className="rounded-md bg-[color:var(--surface-elevated)] border border-[color:var(--border)] text-[12px] overflow-hidden">
+    <div
+      className={`rounded-md bg-[color:var(--surface-elevated)] border text-[12px] overflow-hidden ${
+        active ? "border-[color:var(--neon)]" : "border-[color:var(--border)]"
+      }`}
+    >
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((v) => !v);
+          if (id && onOpen) onOpen(id);
+        }}
         className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[color:var(--surface-hover)] tx-hover text-left"
       >
         <ChevronRight
@@ -41,7 +58,7 @@ export function InlineToolCall({ part }: { part: ToolPart }) {
         )}
       </button>
       {open && (
-        <div className="px-3 pb-2 pt-1 font-mono text-[11px] space-y-2 border-t border-[color:var(--border)] text-[color:var(--text-tertiary)]">
+        <div className="px-3 pb-2 pt-1 font-mono text-[11px] space-y-2 border-t border-[color:var(--border)] text-[color:var(--text-tertiary)] md:hidden">
           {part.input != null && (
             <div>
               <div className="text-[10px] uppercase tracking-[0.06em] opacity-50 mb-1">input</div>

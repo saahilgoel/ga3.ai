@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { MobileNavSheet } from "@/components/mobile-nav-sheet";
 import { ChatMessage } from "@/components/chat-message";
+import { AgentComputer, type ToolCallItem } from "@/components/agent-computer";
 import { type SiteProfile } from "@/components/site-profile-card";
 import {
   AGENT_MAP,
@@ -102,6 +103,7 @@ export function ChatClient({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [openToolId, setOpenToolId] = useState<string | null>(null);
   const [briefingOpen, setBriefingOpen] = useState(false);
 
   const [msgAgent, setMsgAgent] = useState<Map<string, string>>(new Map());
@@ -365,8 +367,43 @@ export function ChatClient({
     return AGENTS.map((a) => ({ text: a.signatureMoves[0], agent: a.id }));
   }, [activeAgent]);
 
+  // Flatten every tool call in the conversation for the "agent's computer" panel.
+  const toolCalls: ToolCallItem[] = useMemo(() => {
+    const out: ToolCallItem[] = [];
+    for (const m of messages) {
+      if (m.role !== "assistant") continue;
+      const aid = msgAgent.get(m.id) || activeAgentId || null;
+      (m.parts || []).forEach((p, i) => {
+        const t = (p as { type?: string }).type;
+        if (typeof t === "string" && t.startsWith("tool-")) {
+          const tp = p as {
+            input?: unknown;
+            output?: unknown;
+            errorText?: string;
+            state?: string;
+          };
+          out.push({
+            id: `${m.id}::${i}`,
+            toolName: t.replace(/^tool-/, ""),
+            input: tp.input,
+            output: tp.output,
+            errorText: tp.errorText,
+            state: tp.state,
+            agentId: aid,
+          });
+        }
+      });
+    }
+    return out;
+  }, [messages, msgAgent, activeAgentId]);
+
+  useEffect(() => {
+    if (openToolId && !toolCalls.some((c) => c.id === openToolId)) setOpenToolId(null);
+  }, [openToolId, toolCalls]);
+
   return (
-    <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <div className="flex-1 flex min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
       <MobileNavSheet
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
@@ -478,7 +515,7 @@ export function ChatClient({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
                 >
-                  <ChatMessage message={m} agentId={msgAgent.get(m.id) || null} />
+                  <ChatMessage message={m} agentId={msgAgent.get(m.id) || null} onToolOpen={setOpenToolId} />
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -547,6 +584,16 @@ export function ChatClient({
             bump(5);
           }}
         />
+      </div>
+      {openToolId && (
+        <AgentComputer
+          calls={toolCalls}
+          selectedId={openToolId}
+          onSelect={setOpenToolId}
+          onClose={() => setOpenToolId(null)}
+          agentId={activeAgentId}
+        />
+      )}
     </div>
   );
 }

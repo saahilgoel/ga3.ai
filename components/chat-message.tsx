@@ -13,9 +13,11 @@ import { ContextCitations } from "@/components/context-citations";
 export function ChatMessage({
   message,
   agentId,
+  onToolOpen,
 }: {
   message: UIMessage;
   agentId?: string | null;
+  onToolOpen?: (id: string) => void;
 }) {
   const isUser = message.role === "user";
   const agent = agentId ? AGENT_MAP[agentId] : null;
@@ -91,7 +93,10 @@ export function ChatMessage({
           if (part.type === "tool-render_visualization") {
             const tp = part as ToolPart;
             const viz = (tp.output ?? tp.input) as Visualization | undefined;
-            if (!viz || !viz.kind) return <InlineToolCall key={i} part={tp} />;
+            if (!viz || !viz.kind)
+              return (
+                <InlineToolCall key={i} part={tp} id={`${message.id}::${i}`} onOpen={onToolOpen} />
+              );
             return (
               <div key={i} className="w-full max-w-[640px]">
                 <VisualizationRenderer viz={viz} agentId={agentId} />
@@ -108,7 +113,14 @@ export function ChatMessage({
             );
           }
           if (part.type?.startsWith("tool-")) {
-            return <InlineToolCall key={i} part={part as ToolPart} />;
+            return (
+              <InlineToolCall
+                key={i}
+                part={part as ToolPart}
+                id={`${message.id}::${i}`}
+                onOpen={onToolOpen}
+              />
+            );
           }
           return null;
         })}
