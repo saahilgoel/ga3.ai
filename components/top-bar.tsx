@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Power, Sparkles, Menu, Bell, LogOut, Settings, Plug } from "lucide-react";
+import { RefreshCw, Sparkles, Menu, Bell, LogOut, Settings, Plug } from "lucide-react";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { cachedJSON, invalidate } from "@/lib/client-cache";
 import { useEventStream, type StreamEvent } from "@/lib/use-event-stream";
@@ -114,9 +114,9 @@ export function TopBar({ onMenu }: { onMenu?: () => void } = {}) {
           title={scanning ? "Scanning" : "Re-scan now"}
           className="size-8 rounded-md hover:bg-[color:var(--surface-hover)] disabled:opacity-50 tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
         >
-          <Power
+          <RefreshCw
             strokeWidth={1.5}
-            className={`size-4 ${scanning ? "animate-pulse" : ""}`}
+            className={`size-4 ${scanning ? "animate-spin" : ""}`}
           />
         </button>
         <button
