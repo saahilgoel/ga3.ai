@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { trackedModel } from "@/lib/usage/anthropic";
 import { generateText } from "ai";
 import { getSession, readUserIds } from "@/lib/session";
+import { resolveActiveWorkspace } from "@/lib/workspace";
+import { getBusinessType } from "@/lib/db";
+import {
+  BUSINESS_TYPE_LABEL,
+  BUSINESS_TYPE_LENS,
+  type BusinessType,
+} from "@/lib/business-type";
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -29,7 +36,16 @@ export async function POST(req: NextRequest) {
     };
     const topChannel = d.top_channels?.[0];
     const mobile = d.device_mix?.rows?.find((r) => r.device === "mobile");
-    const prompt = `Write a 1-2 sentence TL;DR for an analytics dashboard. Factual, no emojis, no fluff, no greeting. Indian numbering where useful. Mention 1-2 of the most material numbers below. Range: ${d.range.label}.
+
+    // Tailor the headline to what kind of business this is (north-star: the
+    // dashboard speaks the owner's language — revenue vs retention vs readership).
+    const ws = resolveActiveWorkspace(session);
+    const bt = ws ? getBusinessType(ws.id) : undefined;
+    const type = (bt?.business_type as BusinessType) || "other";
+    const label = BUSINESS_TYPE_LABEL[type] ?? "website";
+    const lens = BUSINESS_TYPE_LENS[type] ?? BUSINESS_TYPE_LENS.other;
+
+    const prompt = `You are briefing the owner of a ${label}. Write a punchy 1-2 sentence headline insight — the single most important thing right now — through the lens of ${lens}. Lead with what changed and why it matters; if a rate looks implausible (e.g. near-100% conversion), flag it as a likely setup/config issue, not a win. Factual, no emojis, no fluff, no greeting. Indian numbering where useful. Range: ${d.range.label}.
 
 Sessions: ${d.kpi.sessions.current.toLocaleString("en-IN")} (${
       d.kpi.sessions.delta_pct == null

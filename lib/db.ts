@@ -307,6 +307,11 @@ export function getDb(): Database.Database {
     "ALTER TABLE context_status ADD COLUMN last_industry_refresh_at INTEGER",
     // v10: AI visibility V2 — citations per run + AI-generated recommendations.
     "ALTER TABLE ai_visibility_runs ADD COLUMN citations_json TEXT",
+    // v11: business-type classification — drives the tailored dashboard.
+    "ALTER TABLE context_status ADD COLUMN business_type TEXT",
+    "ALTER TABLE context_status ADD COLUMN business_type_confidence INTEGER",
+    "ALTER TABLE context_status ADD COLUMN business_type_rationale TEXT",
+    "ALTER TABLE context_status ADD COLUMN business_type_at INTEGER",
   ]) {
     try {
       db.exec(stmt);
@@ -728,6 +733,42 @@ export function getPropertiesForUsers(userIds: number[]): PropertyRow[] {
 
 export function setSiteProfile(propertyId: number, profileJson: string) {
   getDb().prepare("UPDATE properties SET site_profile_json = ? WHERE id = ?").run(profileJson, propertyId);
+}
+
+// Detected business type lives on the workspace's context_status row. Upsert so
+// it works whether or not the context build has created the row yet.
+export function setBusinessType(
+  workspaceId: number,
+  type: string,
+  confidence: number,
+  rationale: string
+) {
+  getDb()
+    .prepare(
+      `INSERT INTO context_status (workspace_id, business_type, business_type_confidence, business_type_rationale, business_type_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(workspace_id) DO UPDATE SET
+         business_type = excluded.business_type,
+         business_type_confidence = excluded.business_type_confidence,
+         business_type_rationale = excluded.business_type_rationale,
+         business_type_at = excluded.business_type_at`
+    )
+    .run(workspaceId, type, Math.round(confidence), rationale, Math.floor(Date.now() / 1000));
+}
+
+export type BusinessTypeRow = {
+  business_type: string | null;
+  business_type_confidence: number | null;
+  business_type_rationale: string | null;
+};
+
+export function getBusinessType(workspaceId: number): BusinessTypeRow | undefined {
+  return getDb()
+    .prepare(
+      `SELECT business_type, business_type_confidence, business_type_rationale
+       FROM context_status WHERE workspace_id = ?`
+    )
+    .get(workspaceId) as BusinessTypeRow | undefined;
 }
 
 export function setActiveProperties(userIds: number[], activeIds: number[]) {

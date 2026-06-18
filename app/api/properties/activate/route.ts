@@ -7,10 +7,12 @@ import {
   setActiveProperties,
   findSingleWorkspaceForProperty,
   createWorkspace,
+  setBusinessType,
   WorkspaceRow,
 } from "@/lib/db";
 import { getFreshAccessToken, getPropertyWebsiteUrl } from "@/lib/google";
-import { generateSiteProfile } from "@/lib/profile";
+import { generateSiteProfile, type SiteProfile } from "@/lib/profile";
+import { classifyBusiness } from "@/lib/business-type";
 import { onboardWorkspace } from "@/lib/onboarding";
 import { bumpWorkspaceUsage } from "@/lib/workspace";
 import { runPropertyDoctor } from "@/lib/doctor";
@@ -115,6 +117,28 @@ export async function POST(req: NextRequest) {
   // are grounded in the brand/competitor context, not generic. The ProgressStrip
   // surfaces each step live. Fire-and-forget.
   onboardWorkspace(ws.id).catch(() => {});
+
+  // Detect the business type (ecommerce / SaaS / content / lead-gen / …) from
+  // the property's real GA4 events + scraped site profile, so the dashboard can
+  // tailor itself to the owner. Fire-and-forget; stored on the workspace.
+  const wsId = ws.id;
+  (async () => {
+    try {
+      const token = await getFreshAccessToken(p.user_id);
+      const fresh = getPropertiesByIds([p.id])[0];
+      const profile: SiteProfile | null = fresh?.site_profile_json
+        ? (JSON.parse(fresh.site_profile_json) as SiteProfile)
+        : null;
+      const c = await classifyBusiness({
+        accessToken: token,
+        propertyId: p.ga4_property_id,
+        siteProfile: profile,
+      });
+      setBusinessType(wsId, c.business_type, c.confidence, c.rationale);
+    } catch (err) {
+      console.warn(`[activate] business classify failed:`, (err as Error).message);
+    }
+  })();
 
   return NextResponse.json({
     ok: true,
