@@ -19,6 +19,7 @@ import { ViewToggle, type DashboardView } from "@/components/dashboard/view-togg
 import { SiteFavicon } from "@/components/site-favicon";
 import { PaidView } from "@/components/dashboard/paid-view";
 import { UnifiedView } from "@/components/dashboard/unified-view";
+import type { InsightCard } from "@/lib/insights";
 
 type Props = {
   workspace: { id: number; name: string; property_count: number; websiteUrl?: string | null };
@@ -66,6 +67,7 @@ export function DashboardClient({
   const [refreshing, setRefreshing] = useState(false);
   const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
   const [narrative, setNarrative] = useState<string>("");
+  const [insights, setInsights] = useState<InsightCard[]>([]);
   const inflight = useRef<AbortController | null>(null);
 
   // Persist comparison choice
@@ -194,6 +196,30 @@ export function DashboardClient({
     };
   }, [data]);
 
+  // Expert insight feed (best-effort; computed numbers + LLM judgement/context)
+  useEffect(() => {
+    if (!data) return;
+    let cancelled = false;
+    setInsights([]);
+    (async () => {
+      try {
+        const res = await fetch("/api/dashboard/insights", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ data }),
+        });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as { cards: InsightCard[] };
+        if (!cancelled) setInsights(json.cards ?? []);
+      } catch {
+        /* soft-fail */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+
   function askConversation(prompt: string, agent: string) {
     const params = new URLSearchParams({ agent, ask: prompt });
     router.push(`/chat/new?${params.toString()}`);
@@ -275,6 +301,8 @@ export function DashboardClient({
               <>
             {/* Tuned-for-your-business hero (revenue/retention/readership first) */}
             {data?.tailored && <TailoredHero t={data.tailored} />}
+            {/* Expert insight feed — the "wow": accurate numbers + context + recos */}
+            {insights.length > 0 && <InsightsSection cards={insights} onAsk={askConversation} />}
             {/* Realtime */}
             {data && data.realtime && (
               <div className="mb-4">
@@ -492,6 +520,74 @@ function fmtCompactNum(n: number): string {
 
 function secondsAgo(ts: number) {
   return Math.floor((Date.now() - ts) / 1000);
+}
+
+const INSIGHT_KIND: Record<string, { label: string; color: string }> = {
+  anomaly: { label: "Anomaly", color: "var(--severity-high)" },
+  risk: { label: "Risk", color: "var(--severity-high)" },
+  opportunity: { label: "Opportunity", color: "var(--neon)" },
+  benchmark: { label: "Benchmark", color: "var(--severity-medium)" },
+  win: { label: "Win", color: "var(--severity-low)" },
+};
+
+function InsightsSection({
+  cards,
+  onAsk,
+}: {
+  cards: InsightCard[];
+  onAsk: (prompt: string, agent: string) => void;
+}) {
+  return (
+    <section className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <span
+          className="h-2 w-2 rounded-full"
+          style={{ background: "var(--neon)", boxShadow: "0 0 8px var(--neon)" }}
+        />
+        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[color:var(--text-secondary)]">
+          Insights · expert read on your data
+        </span>
+        <span className="font-mono text-[10px] text-[color:var(--text-tertiary)] tabular-nums">{cards.length}</span>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {cards.map((c) => {
+          const meta = INSIGHT_KIND[c.kind] ?? INSIGHT_KIND.anomaly;
+          return (
+            <div
+              key={c.id}
+              className="flex flex-col gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-4"
+            >
+              <span
+                className="self-start font-mono text-[9px] uppercase tracking-[0.12em] px-1.5 py-0.5 rounded"
+                style={{ color: meta.color, border: `1px solid ${meta.color}` }}
+              >
+                {meta.label}
+              </span>
+              <div className="font-mono text-[14px] font-semibold leading-snug">{c.title}</div>
+              <div className="text-[12.5px] text-[color:var(--text-secondary)] leading-relaxed">{c.finding}</div>
+              {c.why && (
+                <div className="text-[12.5px] text-[color:var(--text-primary)] leading-relaxed">{c.why}</div>
+              )}
+              {c.recommendation && (
+                <div className="text-[12px] text-[color:var(--text-secondary)] leading-relaxed">
+                  <span className="font-mono text-[color:var(--neon)]">&rarr; </span>
+                  {c.recommendation}
+                </div>
+              )}
+              {c.ask && (
+                <button
+                  onClick={() => onAsk(c.ask, "any")}
+                  className="mt-1 self-start font-mono text-[11px] uppercase tracking-[0.06em] text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] tx-hover"
+                >
+                  Investigate &rarr;
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function fmtTailored(
