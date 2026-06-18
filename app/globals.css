@@ -1,0 +1,311 @@
+@import "tailwindcss";
+
+:root {
+  /* Neutral dark surfaces — no warm tint, no muddy brown. */
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface-elevated: #1a1a1a;
+  --surface-hover: #222222;
+
+  /* Borders */
+  --border: #1f1f1f;
+  --border-strong: #2a2a2a;
+  --border-focus: #3a3a3a;
+
+  /* Text — proper contrast ratios */
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-tertiary: #6b6b6b;
+  --text-muted: #4a4a4a;
+
+  /* Single neutral accent (no coral) */
+  --accent: #ededed;
+  --accent-hover: #ffffff;
+  --accent-subtle: rgba(237, 237, 237, 0.06);
+
+  /* Neon accent — iris/blue, matching the brand "3". Used only for primary
+     actions + glows; everything else stays monochrome. */
+  --neon: #7c6bff;
+  --neon-bright: #9b8cff;
+  --neon-glow: rgba(124, 107, 255, 0.45);
+
+  /* Severity — desaturated, used inline only */
+  --severity-high: #d04848;
+  --severity-medium: #c08a3a;
+  --severity-low: #6b6b6b;
+
+  /* Agent accents — desaturated. ONLY on monogram borders and the 2px name rule. */
+  --agent-maya: #a78bda;   /* muted violet */
+  --agent-arjun: #d4a55c;  /* muted amber */
+  --agent-priya: #7eaa8a;  /* sage */
+  --agent-kabir: #7fa6bc;  /* dusty blue */
+  --agent-raavi: #cb7a82;  /* muted rose */
+  --agent-vera: #a88b5e;   /* muted ochre — budget strategist */
+
+  /* Fonts */
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-source-serif), "Source Serif 4", "Georgia", serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  /* Backwards-compat aliases */
+  --background: var(--bg);
+  --foreground: var(--text-primary);
+  --muted: var(--surface-elevated);
+  --muted-foreground: var(--text-secondary);
+  --accent-foreground: var(--bg);
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--text-primary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-muted: var(--surface-elevated);
+  --color-muted-foreground: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--bg);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: -0.003em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: contain;
+}
+
+* {
+  border-color: var(--border);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+.font-mono,
+code,
+pre,
+kbd,
+.tabular-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgba(237, 237, 237, 0.18);
+  color: var(--text-primary);
+}
+
+/* Scrollbars */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+.ease-linear-out {
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scanStripe {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes flyTo {
+  0% {
+    transform: translate(0, 0) scale(1.2);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(calc(var(--fly-dx) * 0.85), calc(var(--fly-dy) * 0.85 - 18px)) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--fly-dx), var(--fly-dy)) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes monogramBreathe {
+  0%,
+  100% {
+    background-color: var(--surface-elevated);
+  }
+  50% {
+    background-color: var(--surface);
+  }
+}
+
+@keyframes shimmerBg {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes softPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes neonPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.15);
+    filter: brightness(1.4);
+  }
+}
+.neon-pulse {
+  animation: neonPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes neonSweep {
+  0% {
+    left: -10%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 110%;
+    opacity: 0;
+  }
+}
+.neon-sweep {
+  animation: neonSweep 3.4s ease-in-out infinite;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 0%,
+    var(--surface-hover) 50%,
+    var(--surface) 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmerBg 1.6s ease-in-out infinite;
+}
+
+.tx-hover {
+  transition-property: background-color, border-color, color, opacity;
+  transition-duration: 120ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Neon glow behind primary actions (iris). Pair with a neon background. */
+.neon-glow {
+  box-shadow: 0 0 0 1px var(--neon), 0 6px 26px -8px var(--neon-glow);
+}
+.neon-glow:hover {
+  box-shadow: 0 0 0 1px var(--neon-bright), 0 10px 34px -8px var(--neon-glow);
+}
+
+/* Mobile foundations */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* stop iOS auto-zoom on focus */
+  }
+}
+
+/* ---- Landing-page-only animation helpers (prefixed lp-) ---- */
+@keyframes lpFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes lpDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes lpGridPan {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 44px 44px;
+  }
+}
+.lp-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}

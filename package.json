@@ -1,0 +1,51 @@
+{
+  "name": "gagpt",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start -p ${PORT:-3000}",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.77",
+    "@ai-sdk/react": "^3.0.184",
+    "ai": "^6.0.182",
+    "better-sqlite3": "^12.10.0",
+    "framer-motion": "^12.38.0",
+    "geist": "^1.7.0",
+    "google-ads-api": "^23.0.0",
+    "googleapis": "^171.4.0",
+    "gray-matter": "^4.0.3",
+    "iron-session": "^8.0.4",
+    "lucide-react": "^1.14.0",
+    "next": "15.5.18",
+    "p-queue": "^9.2.0",
+    "pdf-parse": "^2.4.5",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.8.1",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
+    "sqlite-vec": "^0.1.9",
+    "voyageai": "^0.2.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.18",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
