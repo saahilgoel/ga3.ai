@@ -3,6 +3,7 @@
 
 import { runReport, runRealtime } from "./ga4";
 import type { PropertyWithToken } from "./properties";
+import { BUSINESS_TYPE_LABEL } from "./business-type";
 
 export type RangePreset =
   | "today"
@@ -64,8 +65,30 @@ export type DashboardResponse = {
       conversion_rate: number;
     }>;
   };
+  tailored: TailoredDashboard | null;
   sampled: boolean;
   generated_at: number;
+};
+
+// Type-specific section the dashboard leads with — the "tuned for your business"
+// payload. Shaped generically so the client renders KPIs / funnel / list for any type.
+export type TailoredKpi = {
+  key: string;
+  label: string;
+  value: number;
+  format: "number" | "currency" | "percent" | "duration";
+};
+
+export type TailoredDashboard = {
+  business_type: string;
+  label: string;
+  kpis: TailoredKpi[];
+  funnel?: { title: string; steps: Array<{ name: string; value: number }> };
+  list?: {
+    title: string;
+    format: "number" | "currency";
+    rows: Array<{ name: string; value: number }>;
+  };
 };
 
 // ------- Range helpers -------
@@ -220,6 +243,7 @@ export async function buildDashboard(args: {
   range: DashboardRange;
   compareRange: DashboardRange | null;
   rangePresetLabel: string;
+  businessType?: string;
 }): Promise<DashboardResponse> {
   const { active, range, compareRange } = args;
 
@@ -233,6 +257,7 @@ export async function buildDashboard(args: {
     cityRes,
     countryRes,
     deviceRes,
+    tailored,
   ] = await Promise.all([
     safeRealtime(active),
     timeseries(active, range),
@@ -242,6 +267,7 @@ export async function buildDashboard(args: {
     topByDim(active, "city", range, 8),
     topByDim(active, "country", range, 8),
     topByDim(active, "deviceCategory", range, 5),
+    buildTailored(active, range, args.businessType),
   ]);
 
   // KPIs from the timeseries (sum of daily values)
@@ -332,9 +358,150 @@ export async function buildDashboard(args: {
     top_landing_pages,
     top_geography,
     device_mix,
+    tailored,
     sampled: false, // TODO: surface samplesReadCount from response.propertyQuota
     generated_at: Math.floor(Date.now() / 1000),
   };
+}
+
+// ------- Tailored (per business-type) section -------
+
+type TRow = { dimensions: Record<string, string>; metrics: Record<string, string> };
+
+async function safeRows(p: PropertyWithToken, args: RunReportArgsLite): Promise<TRow[]> {
+  try {
+    const r = await runReport(p.accessToken, p.property.ga4_property_id, args);
+    return (r.rows as TRow[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+type RunReportArgsLite = {
+  dimensions: string[];
+  metrics: string[];
+  startDate: string;
+  endDate: string;
+  limit?: number;
+  orderBy?: { metric: string; desc: boolean };
+};
+
+async function eventCountMap(p: PropertyWithToken, range: DashboardRange): Promise<Map<string, number>> {
+  const rows = await safeRows(p, {
+    dimensions: ["eventName"],
+    metrics: ["eventCount"],
+    startDate: range.start,
+    endDate: range.end,
+    limit: 300,
+  });
+  const m = new Map<string, number>();
+  for (const r of rows) m.set(r.dimensions.eventName, Number(r.metrics.eventCount || 0));
+  return m;
+}
+
+function funnelFrom(counts: Map<string, number>, title: string, spec: Array<[string, string]>) {
+  const steps = spec.map(([ev, name]) => ({ name, value: counts.get(ev) ?? 0 }));
+  return steps.every((s) => s.value === 0) ? undefined : { title, steps };
+}
+
+// Decide what the dashboard leads with, by business type. Every GA4 call is
+// defensive — a property missing ecommerce/SaaS tracking just yields zeros, the
+// base dashboard is unaffected.
+async function buildTailored(
+  active: PropertyWithToken[],
+  range: DashboardRange,
+  businessType?: string
+): Promise<TailoredDashboard | null> {
+  const p = active[0];
+  if (!p || !businessType || businessType === "other") return null;
+  const label = BUSINESS_TYPE_LABEL[businessType as keyof typeof BUSINESS_TYPE_LABEL] ?? "website";
+
+  try {
+    if (businessType === "ecommerce" || businessType === "marketplace") {
+      const [m, prod, counts] = await Promise.all([
+        safeRows(p, { dimensions: [], metrics: ["totalRevenue", "transactions", "averagePurchaseRevenue"], startDate: range.start, endDate: range.end, limit: 1 }),
+        safeRows(p, { dimensions: ["itemName"], metrics: ["itemRevenue"], startDate: range.start, endDate: range.end, limit: 6, orderBy: { metric: "itemRevenue", desc: true } }),
+        eventCountMap(p, range),
+      ]);
+      const r0 = m[0]?.metrics ?? {};
+      const kpis: TailoredKpi[] = [
+        { key: "revenue", label: "Revenue", value: Number(r0.totalRevenue || 0), format: "currency" },
+        { key: "orders", label: "Orders", value: Number(r0.transactions || 0), format: "number" },
+        { key: "aov", label: "Avg order value", value: Number(r0.averagePurchaseRevenue || 0), format: "currency" },
+      ];
+      const funnel = funnelFrom(counts, "Purchase journey", [
+        ["view_item", "Viewed"],
+        ["add_to_cart", "Add to cart"],
+        ["begin_checkout", "Checkout"],
+        ["purchase", "Purchase"],
+      ]);
+      const rows = prod.map((r) => ({ name: r.dimensions.itemName || "(unknown)", value: Number(r.metrics.itemRevenue || 0) })).filter((r) => r.value > 0);
+      const list = rows.length ? { title: "Top products by revenue", format: "currency" as const, rows } : undefined;
+      return { business_type: businessType, label, kpis, funnel, list };
+    }
+
+    if (businessType === "saas") {
+      const [m, counts] = await Promise.all([
+        safeRows(p, { dimensions: [], metrics: ["active1DayUsers", "active7DayUsers", "active28DayUsers"], startDate: range.start, endDate: range.end, limit: 1 }),
+        eventCountMap(p, range),
+      ]);
+      const r0 = m[0]?.metrics ?? {};
+      const dau = Number(r0.active1DayUsers || 0);
+      const mau = Number(r0.active28DayUsers || 0);
+      const kpis: TailoredKpi[] = [
+        { key: "dau", label: "DAU", value: dau, format: "number" },
+        { key: "wau", label: "WAU", value: Number(r0.active7DayUsers || 0), format: "number" },
+        { key: "mau", label: "MAU", value: mau, format: "number" },
+        { key: "stickiness", label: "Stickiness (DAU/MAU)", value: mau > 0 ? (dau / mau) * 100 : 0, format: "percent" },
+      ];
+      const funnel = funnelFrom(counts, "Activation", [
+        ["session_start", "Sessions"],
+        ["sign_up", "Signups"],
+        ["login", "Logins"],
+      ]);
+      return { business_type: businessType, label, kpis, funnel };
+    }
+
+    if (businessType === "content") {
+      const [m, pages, nvr] = await Promise.all([
+        safeRows(p, { dimensions: [], metrics: ["engagedSessions", "engagementRate", "averageSessionDuration"], startDate: range.start, endDate: range.end, limit: 1 }),
+        safeRows(p, { dimensions: ["pagePath"], metrics: ["engagedSessions"], startDate: range.start, endDate: range.end, limit: 6, orderBy: { metric: "engagedSessions", desc: true } }),
+        safeRows(p, { dimensions: ["newVsReturning"], metrics: ["totalUsers"], startDate: range.start, endDate: range.end, limit: 5 }),
+      ]);
+      const r0 = m[0]?.metrics ?? {};
+      const totalU = nvr.reduce((s, r) => s + Number(r.metrics.totalUsers || 0), 0);
+      const returning = Number(nvr.find((r) => (r.dimensions.newVsReturning || "").toLowerCase().includes("return"))?.metrics.totalUsers || 0);
+      const kpis: TailoredKpi[] = [
+        { key: "engaged", label: "Engaged sessions", value: Number(r0.engagedSessions || 0), format: "number" },
+        { key: "engRate", label: "Engagement rate", value: Number(r0.engagementRate || 0) * 100, format: "percent" },
+        { key: "avgTime", label: "Avg engagement time", value: Number(r0.averageSessionDuration || 0), format: "duration" },
+        { key: "returning", label: "Returning readers", value: totalU > 0 ? (returning / totalU) * 100 : 0, format: "percent" },
+      ];
+      const rows = pages.map((r) => ({ name: r.dimensions.pagePath || "(unknown)", value: Number(r.metrics.engagedSessions || 0) })).filter((r) => r.value > 0);
+      const list = rows.length ? { title: "Top content by engaged sessions", format: "number" as const, rows } : undefined;
+      return { business_type: businessType, label, kpis, list };
+    }
+
+    if (businessType === "leadgen") {
+      const counts = await eventCountMap(p, range);
+      const leads = (counts.get("generate_lead") || 0) + (counts.get("form_submit") || 0) + (counts.get("contact") || 0);
+      const sessions = counts.get("session_start") || 0;
+      const kpis: TailoredKpi[] = [
+        { key: "leads", label: "Leads", value: leads, format: "number" },
+        { key: "leadRate", label: "Lead conversion", value: sessions > 0 ? (leads / sessions) * 100 : 0, format: "percent" },
+        { key: "sessions", label: "Sessions", value: sessions, format: "number" },
+      ];
+      const funnel = funnelFrom(counts, "Lead funnel", [
+        ["session_start", "Sessions"],
+        ["form_start", "Form start"],
+        ["generate_lead", "Lead"],
+      ]);
+      return { business_type: businessType, label, kpis, funnel };
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 // ------- Pieces -------

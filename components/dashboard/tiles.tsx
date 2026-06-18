@@ -24,6 +24,23 @@ export type Kpi = {
   delta_pct: number | null;
   sparkline: number[];
 };
+export type TailoredKpi = {
+  key: string;
+  label: string;
+  value: number;
+  format: "number" | "currency" | "percent" | "duration";
+};
+export type TailoredDashboard = {
+  business_type: string;
+  label: string;
+  kpis: TailoredKpi[];
+  funnel?: { title: string; steps: Array<{ name: string; value: number }> };
+  list?: {
+    title: string;
+    format: "number" | "currency";
+    rows: Array<{ name: string; value: number }>;
+  };
+};
 export type DashboardData = {
   range: { start: string; end: string; label: string };
   compare_range: { start: string; end: string } | null;
@@ -62,6 +79,7 @@ export type DashboardData = {
       conversion_rate: number;
     }>;
   };
+  tailored: TailoredDashboard | null;
   sampled: boolean;
 };
 

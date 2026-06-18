@@ -273,6 +273,8 @@ export function DashboardClient({
 
             {view === "audience" && (
               <>
+            {/* Tuned-for-your-business hero (revenue/retention/readership first) */}
+            {data?.tailored && <TailoredHero t={data.tailored} />}
             {/* Realtime */}
             {data && data.realtime && (
               <div className="mb-4">
@@ -490,4 +492,100 @@ function fmtCompactNum(n: number): string {
 
 function secondsAgo(ts: number) {
   return Math.floor((Date.now() - ts) / 1000);
+}
+
+function fmtTailored(
+  value: number,
+  format: "number" | "currency" | "percent" | "duration"
+): string {
+  if (!Number.isFinite(value)) return "0";
+  if (format === "percent") return `${value.toFixed(1)}%`;
+  if (format === "duration") {
+    const s = Math.round(value);
+    return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
+  }
+  const n = fmtCompactNum(value);
+  return format === "currency" ? `₹${n}` : n;
+}
+
+// The "tuned for your business" hero — the first thing the owner sees, in their
+// own language (revenue / retention / readership), above the universal metrics.
+function TailoredHero({ t }: { t: NonNullable<DashboardData["tailored"]> }) {
+  const funnelMax = t.funnel ? Math.max(...t.funnel.steps.map((s) => s.value), 1) : 1;
+  const listMax = t.list ? Math.max(...t.list.rows.map((r) => r.value), 1) : 1;
+  return (
+    <section className="mb-6 rounded-lg border border-[color:var(--border-strong)] bg-[color:var(--surface)] overflow-hidden">
+      <div className="flex items-center gap-2 px-4 h-10 border-b border-[color:var(--border)]">
+        <span
+          className="h-2 w-2 rounded-full"
+          style={{ background: "var(--neon)", boxShadow: "0 0 8px var(--neon)" }}
+        />
+        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[color:var(--text-secondary)]">
+          Tuned for your {t.label}
+        </span>
+      </div>
+      <div className="p-4 space-y-4">
+        <div className={`grid grid-cols-2 ${t.kpis.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-3`}>
+          {t.kpis.map((k) => (
+            <div key={k.key} className="rounded-md border border-[color:var(--border)] bg-[color:var(--bg)] p-3">
+              <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] truncate">
+                {k.label}
+              </div>
+              <div className="mt-1.5 font-mono text-[22px] font-semibold tabular-nums leading-none">
+                {fmtTailored(k.value, k.format)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {(t.funnel || t.list) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {t.funnel && (
+              <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--bg)] p-3.5">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] mb-3">
+                  {t.funnel.title}
+                </div>
+                <div className="space-y-2">
+                  {t.funnel.steps.map((s, i) => {
+                    const prev = i > 0 ? t.funnel!.steps[i - 1].value : null;
+                    const conv = prev && prev > 0 ? (s.value / prev) * 100 : null;
+                    return (
+                      <div key={s.name} className="flex items-center gap-2 text-[12px]">
+                        <span className="w-24 shrink-0 truncate text-[color:var(--text-secondary)]">{s.name}</span>
+                        <div className="flex-1 h-4 bg-[color:var(--surface-elevated)] rounded-sm overflow-hidden">
+                          <div className="h-full" style={{ width: `${(s.value / funnelMax) * 100}%`, background: "var(--neon)" }} />
+                        </div>
+                        <span className="w-14 shrink-0 text-right font-mono tabular-nums">{fmtCompactNum(s.value)}</span>
+                        <span className="w-10 shrink-0 text-right font-mono tabular-nums text-[color:var(--text-tertiary)]">
+                          {conv != null ? `${conv.toFixed(0)}%` : "—"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {t.list && (
+              <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--bg)] p-3.5">
+                <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] mb-3">
+                  {t.list.title}
+                </div>
+                <div className="space-y-2">
+                  {t.list.rows.slice(0, 6).map((r) => (
+                    <div key={r.name} className="flex items-center gap-2 text-[12px]">
+                      <span className="flex-1 truncate text-[color:var(--text-secondary)]">{r.name}</span>
+                      <div className="w-20 h-3 bg-[color:var(--surface-elevated)] rounded-sm overflow-hidden">
+                        <div className="h-full" style={{ width: `${(r.value / listMax) * 100}%`, background: "var(--text-primary)" }} />
+                      </div>
+                      <span className="w-16 shrink-0 text-right font-mono tabular-nums">{fmtTailored(r.value, t.list!.format)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, readUserIds } from "@/lib/session";
 import { resolveActiveWorkspace, resolveWorkspaceWithTokens } from "@/lib/workspace";
+import { getBusinessType } from "@/lib/db";
 import {
   buildDashboard,
   computeComparison,
@@ -52,6 +53,7 @@ export async function POST(req: NextRequest) {
       range,
       compareRange,
       rangePresetLabel: preset,
+      businessType: getBusinessType(ws.id)?.business_type ?? undefined,
     });
     CACHE.set(key, data);
     return NextResponse.json({ ...data, cached: false });
