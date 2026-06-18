@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PixelFace, FACES } from "@/components/landing/pixel-face";
+import { PixelFace, FACES, AGENT_PALETTE } from "@/components/landing/pixel-face";
 
 type AgentMini = {
   id: string;
@@ -91,7 +91,7 @@ export function AgentsClient({ roster }: { roster: AgentMini[] }) {
                   }`}
                 >
                   <span className="shrink-0 grid place-items-center h-10 w-10 border border-[color:var(--border-strong)] bg-[color:var(--bg)]">
-                    {f && <PixelFace rows={f} size={32} />}
+                    {f && <PixelFace rows={f} size={32} colors={AGENT_PALETTE[a.id]} />}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block font-mono text-[13px] truncate">{a.name}</span>
@@ -133,7 +133,7 @@ export function AgentsClient({ roster }: { roster: AgentMini[] }) {
             <div className="p-5">
               <div className="flex items-center gap-4">
                 <span className="shrink-0 grid place-items-center h-16 w-16 border border-[color:var(--border-strong)] bg-[color:var(--bg)]">
-                  {face && <PixelFace rows={face} size={54} />}
+                  {face && <PixelFace rows={face} size={54} colors={AGENT_PALETTE[agent.id]} />}
                 </span>
                 <div className="min-w-0">
                   <div className="font-mono text-[20px] font-semibold tracking-[-0.01em]">{agent.name}</div>

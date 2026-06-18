@@ -32,7 +32,7 @@ import {
 import { AGENTS, AGENT_MAP } from "@/lib/agents";
 import { AGENT_HEX } from "@/lib/viz";
 import { Monogram } from "@/components/monogram";
-import { PixelFace, FACES } from "@/components/landing/pixel-face";
+import { PixelFace, FACES, AGENT_PALETTE } from "@/components/landing/pixel-face";
 import { loadStalkerScore } from "@/lib/polish";
 import { SearchOverlay } from "@/components/search-overlay";
 import { cachedJSON, invalidate } from "@/lib/client-cache";
@@ -416,7 +416,7 @@ export function Sidebar({
               } group`}
             >
               <span className="grid place-items-center h-5 w-5 shrink-0 border border-[color:var(--border-strong)] bg-[color:var(--bg)]">
-                <PixelFace rows={FACES[a.id] ?? FACES.maya} size={16} />
+                <PixelFace rows={FACES[a.id] ?? FACES.maya} size={16} colors={AGENT_PALETTE[a.id]} />
               </span>
               {expanded && (
                 <>

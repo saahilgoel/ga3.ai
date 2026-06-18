@@ -2,7 +2,7 @@
 
 import { AGENT_HEX } from "@/lib/viz";
 import type { Agent } from "@/lib/agents";
-import { PixelFace, FACES } from "@/components/landing/pixel-face";
+import { PixelFace, FACES, AGENT_PALETTE } from "@/components/landing/pixel-face";
 
 type StatusLevel = "high" | "medium" | null | undefined;
 
@@ -34,7 +34,7 @@ export function Monogram({
       }}
     >
       {face ? (
-        <PixelFace rows={face} size={Math.round(size * 0.82)} />
+        <PixelFace rows={face} size={Math.round(size * 0.82)} colors={AGENT_PALETTE[agent.id]} />
       ) : (
         <span
           className="font-mono font-semibold text-[color:var(--text-primary)] leading-none select-none"

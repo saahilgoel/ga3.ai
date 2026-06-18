@@ -119,17 +119,33 @@ export const FACES: Record<string, string[]> = {
   ],
 };
 
+// Per-agent colour palettes — warm skin + the agent's signature colour for
+// hair/features. Makes the busts colourful + friendlier while the rest of the
+// UI stays monochrome. Keyed by agent id.
+export const AGENT_PALETTE: Record<string, { skin: string; ink: string }> = {
+  maya: { skin: "#f5cda3", ink: "#8b7bff" }, // violet
+  arjun: { skin: "#eab98c", ink: "#9a652f" }, // brown beard
+  priya: { skin: "#f3c9aa", ink: "#2f9e6e" }, // emerald
+  kabir: { skin: "#ead0ad", ink: "#3f8fc4" }, // sky blue
+  raavi: { skin: "#e6b39e", ink: "#d2545f" }, // rose
+  vera: { skin: "#f1c79a", ink: "#c79334" }, // ochre/gold
+};
+
 export function PixelFace({
   rows,
   size = 34,
   className = "",
+  colors,
 }: {
   rows: string[];
   size?: number;
   className?: string;
+  colors?: { skin?: string; ink?: string };
 }) {
   const h = rows.length;
   const w = rows[0]?.length ?? 0;
+  const ink = colors?.ink ?? "#ededed";
+  const skin = colors?.skin ?? "#5f5f5f";
   return (
     <svg
       width={size}
@@ -148,7 +164,7 @@ export function PixelFace({
               y={y}
               width={1}
               height={1}
-              fill={ch === "#" ? "#ededed" : "#5f5f5f"}
+              fill={ch === "#" ? ink : skin}
             />
           )
         )

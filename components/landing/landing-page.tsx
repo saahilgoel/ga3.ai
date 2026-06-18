@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Reveal } from "./reveal";
-import { PixelFace, FACES } from "./pixel-face";
+import { PixelFace, FACES, AGENT_PALETTE } from "./pixel-face";
 
 /* Monochrome, quant-terminal, pixel-graphics. No hue — the app's palette is
    already neutral grayscale, so we lean entirely on var(--text-*) + borders.
@@ -614,7 +614,7 @@ function AgentsVisual() {
             className="flex items-center gap-2.5 border border-[color:var(--border)] bg-[color:var(--bg)] px-2.5 py-2.5"
           >
             <div className="shrink-0 grid place-items-center h-12 w-12 border border-[color:var(--border-strong)] bg-[color:var(--surface)]">
-              <PixelFace rows={FACES[face]} size={38} />
+              <PixelFace rows={FACES[face]} size={38} colors={AGENT_PALETTE[face]} />
             </div>
             <div className="min-w-0 font-mono">
               <div className="text-[12.5px] text-[color:var(--text-primary)] truncate">{n}</div>
