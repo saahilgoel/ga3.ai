@@ -116,7 +116,7 @@ export function CompetitorsClient({ initial, workspaceName }: Props) {
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-tertiary)] mb-2">
               Competitive intelligence · {workspaceName}
             </div>
-            <h1 className="font-serif text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.05]">
+            <h1 className="font-mono text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.05]">
               Competitors
             </h1>
             <p className="text-[13px] text-[color:var(--text-secondary)] mt-2 max-w-xl">
@@ -184,7 +184,7 @@ export function CompetitorsClient({ initial, workspaceName }: Props) {
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="min-w-0 flex-1">
-                    <div className="font-serif text-[18px] font-medium tracking-[-0.01em] truncate">
+                    <div className="font-mono text-[18px] font-medium tracking-[-0.01em] truncate">
                       {c.brand_name}
                     </div>
                     {c.website_url && (
@@ -331,7 +331,7 @@ function AddCompetitorModal({
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-tertiary)] mb-2">
           Add competitor
         </div>
-        <h2 className="font-serif text-[20px] font-medium tracking-[-0.01em] mb-4">
+        <h2 className="font-mono text-[20px] font-medium tracking-[-0.01em] mb-4">
           Track another brand
         </h2>
         <div className="space-y-3">

@@ -106,11 +106,11 @@ export function BriefArtifact({
           transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
           className="mb-10"
         >
-          <h1 className="font-serif text-[32px] font-medium tracking-[-0.02em] leading-[1.15]">
+          <h1 className="font-mono text-[32px] font-medium tracking-[-0.02em] leading-[1.15]">
             {output.title}
           </h1>
           {output.subtitle && (
-            <p className="font-serif text-[16px] text-[color:var(--text-tertiary)] mt-1.5">
+            <p className="font-mono text-[16px] text-[color:var(--text-tertiary)] mt-1.5">
               {output.subtitle}
             </p>
           )}
@@ -147,7 +147,7 @@ function SectionView({ section, index }: { section: BriefSection; index: number 
       transition={{ duration: 0.25, delay: 0.06 + index * 0.04, ease: [0.2, 0, 0, 1] }}
       className="space-y-3"
     >
-      <h2 className="font-serif text-[18px] font-medium tracking-[-0.01em] inline-block pb-1 border-b border-[color:var(--border)]">
+      <h2 className="font-mono text-[18px] font-medium tracking-[-0.01em] inline-block pb-1 border-b border-[color:var(--border)]">
         {section.heading}
       </h2>
 

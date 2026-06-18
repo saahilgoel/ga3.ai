@@ -71,7 +71,7 @@ export function ChatMessage({
               style={{ background: accent ?? "transparent" }}
             />
           )}
-          <span className="font-serif text-[14px] font-medium text-[color:var(--text-primary)]">
+          <span className="font-mono text-[14px] font-medium text-[color:var(--text-primary)]">
             {agent ? agent.name : "Moderator"}
           </span>
           {agent && (

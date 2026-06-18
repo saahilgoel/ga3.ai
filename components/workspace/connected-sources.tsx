@@ -110,7 +110,7 @@ export function ConnectedSources({
             strokeWidth={1.5}
             className="size-4 text-[color:var(--text-secondary)]"
           />
-          <span className="font-serif text-[15px] font-medium">Google Ads</span>
+          <span className="font-mono text-[15px] font-medium">Google Ads</span>
           {attachedAdsCustomerIds.length > 0 && (
             <span
               className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-[0.06em] px-1.5 py-0.5 rounded-full"

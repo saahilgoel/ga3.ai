@@ -116,7 +116,7 @@ export function PaidView({
 
       <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden">
         <header className="px-5 py-3 border-b border-[color:var(--border)] flex items-center justify-between">
-          <span className="font-serif text-[15px] font-medium">Top campaigns by spend</span>
+          <span className="font-mono text-[15px] font-medium">Top campaigns by spend</span>
           <span className="text-[11px] font-mono text-[color:var(--text-tertiary)]">
             {data.ads_customers.map((c) => c.name).join(" · ")}
           </span>
@@ -216,7 +216,7 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center">
-      <div className="font-serif text-[18px] font-medium">{title}</div>
+      <div className="font-mono text-[18px] font-medium">{title}</div>
       <p className="text-[13px] text-[color:var(--text-secondary)] mt-2 max-w-[480px] mx-auto leading-relaxed">
         {body}
       </p>

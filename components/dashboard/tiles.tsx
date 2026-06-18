@@ -251,7 +251,7 @@ export function TrafficChartTile({
       className="w-full text-left rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-4 hover:bg-[color:var(--surface-hover)] hover:border-[color:var(--border-strong)] tx-hover group"
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="font-serif text-[15px] font-medium">Traffic over time</span>
+        <span className="font-mono text-[15px] font-medium">Traffic over time</span>
         <span className="text-[11px] font-mono text-[color:var(--text-tertiary)] flex items-center gap-1">
           {data.granularity}
           <ArrowUpRight

@@ -35,7 +35,7 @@ export function BriefRunningPlaceholder({
         <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
           Running brief
         </div>
-        <h1 className="font-serif text-[28px] font-medium tracking-[-0.015em] leading-tight">
+        <h1 className="font-mono text-[28px] font-medium tracking-[-0.015em] leading-tight">
           {title}
         </h1>
         <p className="text-[13px] text-[color:var(--text-secondary)] leading-relaxed">

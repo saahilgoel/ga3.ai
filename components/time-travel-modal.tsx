@@ -94,7 +94,7 @@ export function TimeTravelModal({
           >
             <header className="flex items-center justify-between px-5 py-4 border-b border-[color:var(--border)]">
               <div>
-                <h2 className="font-serif text-[18px] font-medium tracking-tight">
+                <h2 className="font-mono text-[18px] font-medium tracking-tight">
                   Time-Travel Comparison
                 </h2>
                 <p className="text-[12px] text-[color:var(--text-tertiary)] mt-0.5">

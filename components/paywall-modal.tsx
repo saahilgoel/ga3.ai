@@ -44,7 +44,7 @@ export function PaywallModal({
               <div className="size-10 mx-auto rounded-full bg-[color:var(--surface-elevated)] flex items-center justify-center mb-3 border border-[color:var(--border-strong)]">
                 <Sparkles strokeWidth={1.5} className="size-4 text-[color:var(--text-primary)]" />
               </div>
-              <h2 className="font-serif text-[22px] font-medium tracking-tight leading-tight">
+              <h2 className="font-mono text-[22px] font-medium tracking-tight leading-tight">
                 Briefs are part of ga-chat Pro.
               </h2>
               <p className="text-[13px] text-[color:var(--text-secondary)] mt-2 leading-relaxed">

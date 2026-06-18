@@ -31,7 +31,7 @@ export default async function BriefPage({
           <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--severity-high)]">
             Brief failed
           </div>
-          <h1 className="font-serif text-[24px] font-medium tracking-tight">
+          <h1 className="font-mono text-[24px] font-medium tracking-tight">
             {brief.title}
           </h1>
           <p className="text-[13px] text-[color:var(--text-secondary)]">

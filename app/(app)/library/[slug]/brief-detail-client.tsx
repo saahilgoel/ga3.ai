@@ -132,7 +132,7 @@ Use whatever you can pull from GA4 (and Google Ads if connected). Where a dimens
               </span>
             )}
           </div>
-          <h1 className="font-serif text-[28px] font-medium tracking-[-0.02em] leading-[1.1] mt-1.5">
+          <h1 className="font-mono text-[28px] font-medium tracking-[-0.02em] leading-[1.1] mt-1.5">
             {brief.name}
           </h1>
           <p className="text-[14px] text-[color:var(--text-secondary)] mt-2 leading-relaxed max-w-[680px]">
@@ -251,7 +251,7 @@ Use whatever you can pull from GA4 (and Google Ads if connected). Where a dimens
 
       {/* Description */}
       <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-5 mb-6">
-        <h2 className="font-serif text-[16px] font-medium mb-3">About</h2>
+        <h2 className="font-mono text-[16px] font-medium mb-3">About</h2>
         <div className="text-[13px] text-[color:var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
           {brief.detailed_description}
         </div>
@@ -260,7 +260,7 @@ Use whatever you can pull from GA4 (and Google Ads if connected). Where a dimens
       {/* Metrics */}
       {brief.metrics.length > 0 && (
         <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-5 mb-6">
-          <h2 className="font-serif text-[16px] font-medium mb-3 flex items-center gap-2">
+          <h2 className="font-mono text-[16px] font-medium mb-3 flex items-center gap-2">
             <Sparkles strokeWidth={1.5} className="size-4 text-[color:var(--text-secondary)]" />
             Metrics
           </h2>
@@ -298,7 +298,7 @@ Use whatever you can pull from GA4 (and Google Ads if connected). Where a dimens
       {/* Dimensions */}
       {brief.dimensions.length > 0 && (
         <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-5 mb-6">
-          <h2 className="font-serif text-[16px] font-medium mb-3 flex items-center gap-2">
+          <h2 className="font-mono text-[16px] font-medium mb-3 flex items-center gap-2">
             <Layers strokeWidth={1.5} className="size-4 text-[color:var(--text-secondary)]" />
             Dimensions
           </h2>
@@ -325,7 +325,7 @@ Use whatever you can pull from GA4 (and Google Ads if connected). Where a dimens
       {/* Data sources */}
       {brief.data_sources.length > 0 && (
         <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-5 mb-6">
-          <h2 className="font-serif text-[16px] font-medium mb-3 flex items-center gap-2">
+          <h2 className="font-mono text-[16px] font-medium mb-3 flex items-center gap-2">
             <Database strokeWidth={1.5} className="size-4 text-[color:var(--text-secondary)]" />
             Data sources
           </h2>

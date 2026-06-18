@@ -195,7 +195,7 @@ export function FeedClient({
           <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 max-w-full lg:max-w-[760px] py-6 lg:py-8">
             <header className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 mb-6">
               <div>
-                <h1 className="font-serif text-[28px] font-medium tracking-[-0.015em] leading-[1.1]">
+                <h1 className="font-mono text-[28px] font-medium tracking-[-0.015em] leading-[1.1]">
                   Newsroom
                 </h1>
                 <div className="text-[12px] text-[color:var(--text-tertiary)] mt-1.5 font-mono tabular-nums flex items-center gap-2 flex-wrap">
@@ -243,7 +243,7 @@ export function FeedClient({
 
             {findings && findings.length === 0 && (
               <section className="mt-10">
-                <div className="font-serif text-[18px] font-medium tracking-tight mb-1">
+                <div className="font-mono text-[18px] font-medium tracking-tight mb-1">
                   Start with a Brief.
                 </div>
                 <p className="text-[13px] text-[color:var(--text-secondary)] mb-4">
@@ -329,7 +329,7 @@ function FindingRow({
       <header className="flex items-center gap-2 text-[12px] flex-wrap">
         {agent && <Monogram agent={agent} size={20} />}
         {agent && (
-          <span className="font-serif text-[14px] font-medium text-[color:var(--text-primary)]">
+          <span className="font-mono text-[14px] font-medium text-[color:var(--text-primary)]">
             {agent.name}
           </span>
         )}
@@ -341,7 +341,7 @@ function FindingRow({
         <SeverityLabel severity={finding.severity} />
       </header>
 
-      <h3 className="font-serif text-[18px] font-medium leading-[1.3] mt-2 text-[color:var(--text-primary)]">
+      <h3 className="font-mono text-[18px] font-medium leading-[1.3] mt-2 text-[color:var(--text-primary)]">
         {finding.title}
       </h3>
       <div className="flex flex-col lg:flex-row gap-4 items-start mt-1">
@@ -452,7 +452,7 @@ function EmptyFeed({ onScan, tagline }: { onScan: () => void; tagline: string })
       <div className="text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] font-mono mb-3">
         {tagline}
       </div>
-      <h2 className="font-serif text-[24px] font-medium tracking-[-0.015em] mb-2">
+      <h2 className="font-mono text-[24px] font-medium tracking-[-0.015em] mb-2">
         Awaiting first scan.
       </h2>
       <p className="text-[14px] text-[color:var(--text-secondary)] leading-[1.65] mb-6">

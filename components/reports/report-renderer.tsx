@@ -159,7 +159,7 @@ function ReportRendererInner({ def }: { def: ReportDef }) {
       <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 max-w-[1280px] py-6 lg:py-8">
         <header className="flex items-baseline justify-between flex-wrap gap-3 mb-4">
           <div>
-            <h1 className="font-serif text-[24px] font-medium tracking-[-0.02em] leading-[1.1]">
+            <h1 className="font-mono text-[24px] font-medium tracking-[-0.02em] leading-[1.1]">
               {def.title}
             </h1>
             {def.description && (

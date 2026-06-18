@@ -40,7 +40,7 @@ export function FindingContextCard({ finding }: { finding: SeedFinding }) {
         <div className="flex items-center gap-2 text-[12px]">
           {agent && <Monogram agent={agent} size={20} />}
           {agent && (
-            <span className="font-serif text-[14px] font-medium text-[color:var(--text-primary)]">
+            <span className="font-mono text-[14px] font-medium text-[color:var(--text-primary)]">
               {agent.name}
             </span>
           )}
@@ -60,7 +60,7 @@ export function FindingContextCard({ finding }: { finding: SeedFinding }) {
           </span>
         </div>
 
-        <h3 className="font-serif text-[17px] font-medium leading-[1.3] text-[color:var(--text-primary)]">
+        <h3 className="font-mono text-[17px] font-medium leading-[1.3] text-[color:var(--text-primary)]">
           {finding.title}
         </h3>
 

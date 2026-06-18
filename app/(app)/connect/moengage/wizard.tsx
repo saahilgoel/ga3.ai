@@ -182,7 +182,7 @@ export function MoEngageWizard({
           <ArrowLeft strokeWidth={1.5} className="size-3" />
           Back
         </Link>
-        <h1 className="font-serif text-[28px] font-medium tracking-[-0.02em] leading-[1.1] flex items-center gap-2.5">
+        <h1 className="font-mono text-[28px] font-medium tracking-[-0.02em] leading-[1.1] flex items-center gap-2.5">
           <Send strokeWidth={1.5} className="size-6 text-[color:var(--text-secondary)]" />
           Connect MoEngage
         </h1>
@@ -197,7 +197,7 @@ export function MoEngageWizard({
 
       {/* Step 1: credentials */}
       <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6 mb-4">
-        <h2 className="font-serif text-[18px] font-medium mb-2 flex items-center gap-2">
+        <h2 className="font-mono text-[18px] font-medium mb-2 flex items-center gap-2">
           Step 1 — API credentials
           {credentialsKnown && (
             <span className="text-[10px] font-mono uppercase tracking-[0.06em] px-1.5 py-0.5 rounded"
@@ -344,7 +344,7 @@ export function MoEngageWizard({
       {/* Step 2: test connection */}
       {credentialsKnown && (
         <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6 mb-4">
-          <h2 className="font-serif text-[18px] font-medium mb-2 flex items-center gap-2">
+          <h2 className="font-mono text-[18px] font-medium mb-2 flex items-center gap-2">
             Step 2 — Verify connection
             {testResult?.ok && (
               <span className="text-[10px] font-mono uppercase tracking-[0.06em] px-1.5 py-0.5 rounded"
@@ -391,7 +391,7 @@ export function MoEngageWizard({
       {/* Step 3: attach to workspace */}
       {credentialsKnown && testResult?.ok && (
         <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6 mb-4">
-          <h2 className="font-serif text-[18px] font-medium mb-2 flex items-center gap-2">
+          <h2 className="font-mono text-[18px] font-medium mb-2 flex items-center gap-2">
             Step 3 — Attach to this workspace
             {alreadyAttached && (
               <span className="text-[10px] font-mono uppercase tracking-[0.06em] px-1.5 py-0.5 rounded"

@@ -37,7 +37,7 @@ export function ChatsClient({ conversations }: { conversations: Conv[] }) {
     <>
       <header className="flex items-baseline justify-between mb-6">
         <div>
-          <h1 className="font-serif text-[28px] font-medium tracking-[-0.015em] leading-[1.1]">
+          <h1 className="font-mono text-[28px] font-medium tracking-[-0.015em] leading-[1.1]">
             Chats
           </h1>
           <p className="text-[12px] font-mono text-[color:var(--text-tertiary)] tabular-nums mt-1.5">

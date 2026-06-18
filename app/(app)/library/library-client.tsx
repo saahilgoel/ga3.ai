@@ -212,7 +212,7 @@ export function LibraryClient() {
               <div className="text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] font-mono">
                 Library
               </div>
-              <h1 className="font-serif text-[28px] font-medium tracking-[-0.02em] leading-[1.1] mt-1 flex items-center gap-2.5">
+              <h1 className="font-mono text-[28px] font-medium tracking-[-0.02em] leading-[1.1] mt-1 flex items-center gap-2.5">
                 <LibraryIcon
                   strokeWidth={1.5}
                   className="size-6 text-[color:var(--text-secondary)]"
@@ -268,7 +268,7 @@ export function LibraryClient() {
                       }}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="font-serif text-[13px] font-medium truncate">
+                      <div className="font-mono text-[13px] font-medium truncate">
                         {r.title}
                       </div>
                       <div className="text-[10px] font-mono text-[color:var(--text-tertiary)] tabular-nums">
@@ -421,7 +421,7 @@ function Card({ brief }: { brief: BriefItem }) {
         )}
       </div>
 
-      <div className="font-serif text-[16px] font-medium leading-snug mb-1.5 flex items-start gap-1.5">
+      <div className="font-mono text-[16px] font-medium leading-snug mb-1.5 flex items-start gap-1.5">
         <span className="flex-1">{brief.name}</span>
         <ArrowUpRight
           strokeWidth={1.5}
@@ -489,7 +489,7 @@ function EmptyState({
 }) {
   return (
     <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-10 text-center">
-      <div className="font-serif text-[18px] font-medium">No briefs match</div>
+      <div className="font-mono text-[18px] font-medium">No briefs match</div>
       <p className="text-[13px] text-[color:var(--text-secondary)] mt-2">
         {hasFilters
           ? "Try clearing some filters or widening your search."

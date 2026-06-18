@@ -173,7 +173,7 @@ export function AiVisibilityClient({
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-tertiary)] mb-2">
               GEO · AI search visibility
             </div>
-            <h1 className="font-serif text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.05]">
+            <h1 className="font-mono text-[28px] sm:text-[32px] font-medium tracking-[-0.02em] leading-[1.05]">
               Are you visible in AI answers?
             </h1>
             <p className="text-[13px] text-[color:var(--text-secondary)] mt-2 max-w-xl">
@@ -274,7 +274,7 @@ export function AiVisibilityClient({
                         }}
                       >
                         <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="font-serif text-[16px] font-medium tracking-[-0.01em] leading-tight">
+                          <div className="font-mono text-[16px] font-medium tracking-[-0.01em] leading-tight">
                             {c.title}
                           </div>
                           <div className="flex flex-col items-end gap-1 shrink-0">
@@ -631,7 +631,7 @@ function ResponseModal({
               >
                 {run.surface === "ai_mode" ? "Google AI Mode" : "ChatGPT"} · {timeAgo(run.ran_at)}
               </div>
-              <h2 className="font-serif text-[20px] font-medium tracking-[-0.01em]">
+              <h2 className="font-mono text-[20px] font-medium tracking-[-0.01em]">
                 {run.prompt}
               </h2>
             </div>

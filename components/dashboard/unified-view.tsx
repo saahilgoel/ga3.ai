@@ -76,7 +76,7 @@ export function UnifiedView({
     const needAds = !data.configured || !data.attached;
     return (
       <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-8 text-center">
-        <div className="font-serif text-[18px] font-medium">Unified view needs both</div>
+        <div className="font-mono text-[18px] font-medium">Unified view needs both</div>
         <p className="text-[13px] text-[color:var(--text-secondary)] mt-2 max-w-[480px] mx-auto leading-relaxed">
           Connect both a GA4 property and a Google Ads customer to this workspace to see blended ROAS,
           Real CAC, and per-campaign attribution gaps.
@@ -156,7 +156,7 @@ export function UnifiedView({
 
       <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden">
         <header className="px-5 py-3 border-b border-[color:var(--border)] flex items-center justify-between">
-          <span className="font-serif text-[15px] font-medium">
+          <span className="font-mono text-[15px] font-medium">
             Spend vs conversions per campaign
           </span>
           <span className="text-[11px] font-mono text-[color:var(--text-tertiary)]">

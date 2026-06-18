@@ -234,7 +234,7 @@ export function WorkspaceOverviewClient({
           <div className="text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] font-mono">
             Workspace
           </div>
-          <h1 className="font-serif text-[32px] font-medium tracking-[-0.02em] leading-[1.1] mt-1 flex items-center gap-2.5">
+          <h1 className="font-mono text-[32px] font-medium tracking-[-0.02em] leading-[1.1] mt-1 flex items-center gap-2.5">
             {properties.length > 1 && (
               <Layers
                 strokeWidth={1.5}
@@ -322,7 +322,7 @@ export function WorkspaceOverviewClient({
               strokeWidth={1.5}
               className="size-4 text-[color:var(--text-secondary)]"
             />
-            <span className="font-serif text-[15px] font-medium">
+            <span className="font-mono text-[15px] font-medium">
               Customer Intelligence (RAG)
             </span>
             <span
@@ -427,7 +427,7 @@ export function WorkspaceOverviewClient({
 
       <section className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden mb-8">
         <header className="px-5 py-3 border-b border-[color:var(--border)] flex items-center justify-between gap-3">
-          <div className="font-serif text-[15px] font-medium">
+          <div className="font-mono text-[15px] font-medium">
             {properties.length === 1 ? "Property" : "Properties"} · GA4 doctor
           </div>
           <div className="flex items-center gap-2">
@@ -794,7 +794,7 @@ function Stat({
         {label}
       </div>
       <div
-        className={`mt-1 text-[15px] ${mono ? "font-mono tabular-nums" : "font-serif"} text-[color:var(--text-primary)] truncate`}
+        className={`mt-1 text-[15px] ${mono ? "font-mono tabular-nums" : "font-mono"} text-[color:var(--text-primary)] truncate`}
       >
         {value}
       </div>

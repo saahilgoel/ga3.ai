@@ -394,7 +394,7 @@ export function ChatClient({
                     setTitleDraft(title ?? "");
                   }
                 }}
-                className="flex-1 font-serif text-[18px] font-medium tracking-tight bg-transparent focus:outline-none border-b border-[color:var(--border-strong)]"
+                className="flex-1 font-mono text-[18px] font-medium tracking-tight bg-transparent focus:outline-none border-b border-[color:var(--border-strong)]"
               />
             ) : (
               <button
@@ -405,7 +405,7 @@ export function ChatClient({
                 className="flex items-center gap-2 min-w-0 group"
                 title="Click to rename"
               >
-                <span className="font-serif text-[18px] font-medium tracking-tight truncate">
+                <span className="font-mono text-[18px] font-medium tracking-tight truncate">
                   {title ?? "New chat"}
                 </span>
                 <Pencil
@@ -445,7 +445,7 @@ export function ChatClient({
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: 0.1 }}
-                className="py-2 text-[15px] text-[color:var(--text-secondary)] font-serif italic"
+                className="py-2 text-[15px] text-[color:var(--text-secondary)] font-mono italic"
               >
                 {activeAgent.greeting}
               </motion.div>

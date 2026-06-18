@@ -206,7 +206,7 @@ export function ConnectorsGrid({
           <div className="text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] font-mono">
             Connectors
           </div>
-          <h1 className="font-serif text-[28px] font-medium tracking-[-0.02em] leading-[1.1] mt-1">
+          <h1 className="font-mono text-[28px] font-medium tracking-[-0.02em] leading-[1.1] mt-1">
             Connect your stack
           </h1>
           <p className="text-[13px] text-[color:var(--text-secondary)] mt-1.5 max-w-[640px]">

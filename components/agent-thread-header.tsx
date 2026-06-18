@@ -25,14 +25,14 @@ export function AgentThreadHeader({
               className="block h-4 w-[2px] rounded-full self-center"
               style={{ background: accent }}
             />
-            <span className="font-serif text-[22px] font-medium text-[color:var(--text-primary)] leading-tight">
+            <span className="font-mono text-[22px] font-medium text-[color:var(--text-primary)] leading-tight">
               {agent.name}
             </span>
             <span className="text-[14px] text-[color:var(--text-tertiary)]">
               · {agent.title}
             </span>
           </div>
-          <div className="font-serif text-[15px] text-[color:var(--text-tertiary)] mt-1.5">
+          <div className="font-mono text-[15px] text-[color:var(--text-tertiary)] mt-1.5">
             {agent.tagline}
           </div>
         </div>

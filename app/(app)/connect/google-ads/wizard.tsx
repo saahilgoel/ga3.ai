@@ -151,7 +151,7 @@ export function ConnectAdsWizard({
             <ArrowLeft strokeWidth={1.5} className="size-3" />
             Back
           </Link>
-          <h1 className="font-serif text-[28px] font-medium tracking-[-0.02em] leading-[1.1] flex items-center gap-2.5">
+          <h1 className="font-mono text-[28px] font-medium tracking-[-0.02em] leading-[1.1] flex items-center gap-2.5">
             <Megaphone strokeWidth={1.5} className="size-6 text-[color:var(--text-secondary)]" />
             Connect Google Ads
           </h1>
@@ -304,7 +304,7 @@ function TokenSetup({
 
   return (
     <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
-      <h2 className="font-serif text-[18px] font-medium mb-2">
+      <h2 className="font-mono text-[18px] font-medium mb-2">
         Step 1 — Paste your Google Ads developer token
       </h2>
       <p className="text-[13px] text-[color:var(--text-secondary)] leading-relaxed">
@@ -437,7 +437,7 @@ function TokenSetup({
 function ScopeGrant({ grantUrl }: { grantUrl: string }) {
   return (
     <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
-      <h2 className="font-serif text-[18px] font-medium mb-2">
+      <h2 className="font-mono text-[18px] font-medium mb-2">
         Step 2 — Grant Google Ads scope
       </h2>
       <p className="text-[13px] text-[color:var(--text-secondary)] leading-relaxed">
@@ -503,7 +503,7 @@ function CustomerPicker({
   return (
     <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
       <header className="flex items-baseline justify-between gap-3 mb-4">
-        <h2 className="font-serif text-[18px] font-medium">
+        <h2 className="font-mono text-[18px] font-medium">
           Step 3 — Attach Ads accounts to this workspace
         </h2>
         <button

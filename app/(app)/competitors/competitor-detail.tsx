@@ -91,7 +91,7 @@ export function CompetitorDetail({ competitor, onClose, onDelete }: Props) {
               <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-[color:var(--text-tertiary)] mb-1">
                 Competitor
               </div>
-              <h2 className="font-serif text-[24px] font-medium tracking-[-0.02em] truncate">
+              <h2 className="font-mono text-[24px] font-medium tracking-[-0.02em] truncate">
                 {competitor.brand_name}
               </h2>
               {competitor.website_url && (

@@ -195,7 +195,7 @@ export function ContextClient({
           <div className="text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] font-mono">
             Customer Intelligence
           </div>
-          <h1 className="font-serif text-[28px] font-medium tracking-[-0.015em] leading-[1.1] mt-1">
+          <h1 className="font-mono text-[28px] font-medium tracking-[-0.015em] leading-[1.1] mt-1">
             {status?.brand_name || workspaceName}
           </h1>
           <p className="text-[12px] font-mono tabular-nums text-[color:var(--text-tertiary)] mt-1.5">
@@ -522,7 +522,7 @@ function DocDetailModal({ data, onClose }: { data: DocDetail; onClose: () => voi
             <div className="text-[10px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] font-mono">
               {SOURCE_LABELS[d.source_type] || d.source_type} · #{d.id}
             </div>
-            <div className="font-serif text-[16px] font-medium tracking-tight truncate mt-0.5">
+            <div className="font-mono text-[16px] font-medium tracking-tight truncate mt-0.5">
               {d.title || d.filename || `Document ${d.id}`}
             </div>
           </div>

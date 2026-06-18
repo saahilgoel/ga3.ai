@@ -224,7 +224,7 @@ export function DashboardClient({
                 </div>
                 <div className="flex items-center gap-2.5 mt-1">
                   <SiteFavicon url={workspace.websiteUrl || workspace.name} size={28} />
-                  <h1 className="font-serif text-[28px] font-medium tracking-[-0.02em] leading-[1.1]">
+                  <h1 className="font-mono text-[28px] font-medium tracking-[-0.02em] leading-[1.1]">
                     {workspace.name}
                   </h1>
                 </div>

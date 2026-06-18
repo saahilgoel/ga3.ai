@@ -23,7 +23,7 @@ export default function AppError({
         <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-[color:var(--text-tertiary)] mb-3">
           Something hiccuped
         </div>
-        <h1 className="font-serif text-[24px] font-medium tracking-[-0.01em] mb-2">
+        <h1 className="font-mono text-[24px] font-medium tracking-[-0.01em] mb-2">
           This view hit a snag.
         </h1>
         <p className="text-[13px] text-[color:var(--text-secondary)] mb-6">

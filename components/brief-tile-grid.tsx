@@ -195,7 +195,7 @@ export function BriefTileGrid({
                   </span>
                 )}
               </div>
-              <div className="font-serif text-[16px] font-medium tracking-tight text-[color:var(--text-primary)] leading-snug">
+              <div className="font-mono text-[16px] font-medium tracking-tight text-[color:var(--text-primary)] leading-snug">
                 {t.title}
               </div>
               <div className="text-[12px] text-[color:var(--text-tertiary)] mt-0.5">

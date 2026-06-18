@@ -102,7 +102,7 @@ export function ContextConsentModal({ workspaceName, brandHint }: Props) {
               <X strokeWidth={1.5} className="size-4" />
             </button>
             <div className="px-6 pt-7 pb-5">
-              <h2 className="font-serif text-[22px] font-medium tracking-tight leading-tight">
+              <h2 className="font-mono text-[22px] font-medium tracking-tight leading-tight">
                 Make the agents smarter about your business?
               </h2>
               <p className="text-[13px] text-[color:var(--text-secondary)] mt-2 leading-relaxed">
