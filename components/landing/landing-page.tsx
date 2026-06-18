@@ -93,7 +93,7 @@ function Wordmark() {
   return (
     <Link href="/" className="inline-flex items-center gap-2 select-none">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/brand/mark.svg" alt="GA3" width={22} height={22} className="block" />
+      <img src="/brand/mark-dark.svg" alt="GA3" width={22} height={22} className="block" />
       <span className="font-mono text-[15px] font-semibold tracking-[0.04em]">GA3</span>
       <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[color:var(--text-tertiary)]">.ai</span>
     </Link>

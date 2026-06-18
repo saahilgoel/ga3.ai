@@ -202,7 +202,7 @@ export function Sidebar({
           className="flex items-center gap-2 min-w-0 flex-1"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/mark.svg" alt="GA3" width={28} height={28} className="shrink-0 rounded-md" />
+          <img src="/brand/mark-dark.svg" alt="GA3" width={28} height={28} className="shrink-0 rounded-md" />
           {expanded && (
             <span className="text-[15px] font-semibold tracking-tight truncate">
               GA3<span className="text-[color:var(--text-tertiary)]">.ai</span>

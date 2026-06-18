@@ -126,7 +126,7 @@ export default function PropertiesPage() {
       <header className="max-w-2xl mx-auto px-6 pt-6 flex items-center justify-between">
         <Link href="/" className="inline-flex items-center gap-2 select-none">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/mark.svg" alt="GA3" width={22} height={22} />
+          <img src="/brand/mark-dark.svg" alt="GA3" width={22} height={22} />
           <span className="font-mono text-[14px] font-semibold tracking-[0.04em]">
             GA3<span className="text-[color:var(--text-tertiary)]">.ai</span>
           </span>

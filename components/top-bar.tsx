@@ -98,7 +98,7 @@ export function TopBar({ onMenu }: { onMenu?: () => void } = {}) {
 
       <Link href="/dashboard" className="flex items-center gap-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/mark.svg" alt="GA3" width={24} height={24} className="rounded-md" />
+        <img src="/brand/mark-dark.svg" alt="GA3" width={24} height={24} className="rounded-md" />
         <span className="text-[16px] font-semibold tracking-tight">
           GA3<span className="text-[color:var(--text-tertiary)]">.ai</span>
         </span>
