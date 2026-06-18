@@ -27,6 +27,75 @@ export async function runReport(accessToken: string, propertyId: string, args: R
   return shapeReport(res.data);
 }
 
+// Weekly cohort retention via the GA4 Data API cohortSpec. Returns N weekly
+// cohorts (by firstSessionDate) × retention vs week 0. Null on any failure — the
+// caller renders nothing rather than breaking the dashboard.
+export async function runWeeklyCohortRetention(
+  accessToken: string,
+  propertyId: string,
+  opts: { weeks?: number } = {}
+): Promise<{ weeks: number; rows: Array<{ label: string; size: number; retention: number[] }> } | null> {
+  const weeks = Math.min(8, Math.max(3, opts.weeks ?? 6));
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  const today = new Date();
+  const cohortDefs = [];
+  for (let i = 0; i < weeks; i++) {
+    // cohort i: the week that started (weeks-1-i) weeks ago (oldest first).
+    const end = new Date(today);
+    end.setDate(end.getDate() - (weeks - 1 - i) * 7 - 1);
+    const start = new Date(end);
+    start.setDate(start.getDate() - 6);
+    cohortDefs.push({
+      name: `c${i}`,
+      start: fmt(start),
+      end: fmt(end),
+    });
+  }
+  try {
+    const data = google.analyticsdata({ version: "v1beta", auth: authedClient(accessToken) });
+    const res = await data.properties.runReport({
+      property: propertyId,
+      requestBody: {
+        dimensions: [{ name: "cohort" }, { name: "cohortNthWeek" }],
+        metrics: [{ name: "cohortActiveUsers" }],
+        cohortSpec: {
+          cohorts: cohortDefs.map((c) => ({
+            name: c.name,
+            dimension: "firstSessionDate",
+            dateRange: { startDate: c.start, endDate: c.end },
+          })),
+          cohortsRange: { granularity: "WEEKLY", startOffset: 0, endOffset: weeks - 1 },
+        },
+      },
+    });
+    const grid = new Map<string, Map<number, number>>();
+    for (const r of res.data.rows ?? []) {
+      const cohort = r.dimensionValues?.[0]?.value ?? "";
+      const nth = Number(r.dimensionValues?.[1]?.value ?? "0");
+      const v = Number(r.metricValues?.[0]?.value ?? "0");
+      if (!grid.has(cohort)) grid.set(cohort, new Map());
+      grid.get(cohort)!.set(nth, v);
+    }
+    const rows: Array<{ label: string; size: number; retention: number[] }> = [];
+    for (let i = 0; i < weeks; i++) {
+      const m = grid.get(`c${i}`);
+      if (!m) continue;
+      const base = m.get(0) ?? 0;
+      const span = weeks - i; // a cohort only has data up to the current week
+      const retention: number[] = [];
+      for (let w = 0; w < span; w++) {
+        const active = m.get(w) ?? 0;
+        retention.push(base > 0 ? (active / base) * 100 : 0);
+      }
+      rows.push({ label: cohortDefs[i].start.slice(5), size: base, retention });
+    }
+    if (rows.every((r) => r.size === 0)) return null;
+    return { weeks, rows };
+  } catch {
+    return null;
+  }
+}
+
 export async function runRealtime(
   accessToken: string,
   propertyId: string,

@@ -1,7 +1,7 @@
 // Dashboard data layer: fans out the GA4 calls behind the 10-tile dashboard,
 // computes deltas vs comparison range, and shapes the response for the UI.
 
-import { runReport, runRealtime } from "./ga4";
+import { runReport, runRealtime, runWeeklyCohortRetention } from "./ga4";
 import type { PropertyWithToken } from "./properties";
 import { BUSINESS_TYPE_LABEL } from "./business-type";
 
@@ -88,6 +88,10 @@ export type TailoredDashboard = {
     title: string;
     format: "number" | "currency";
     rows: Array<{ name: string; value: number }>;
+  };
+  cohort?: {
+    weeks: number;
+    rows: Array<{ label: string; size: number; retention: number[] }>;
   };
 };
 
@@ -399,9 +403,25 @@ async function eventCountMap(p: PropertyWithToken, range: DashboardRange): Promi
   return m;
 }
 
-function funnelFrom(counts: Map<string, number>, title: string, spec: Array<[string, string]>) {
-  const steps = spec.map(([ev, name]) => ({ name, value: counts.get(ev) ?? 0 }));
-  return steps.every((s) => s.value === 0) ? undefined : { title, steps };
+// Adaptive funnel: each step maps to a list of candidate event names; we use the
+// first one the property actually fires (count > 0) and drop steps with no match.
+// So a property with custom event names (or no signup/login) gets a real funnel
+// instead of zeros.
+function funnelFrom(
+  counts: Map<string, number>,
+  title: string,
+  spec: Array<{ name: string; events: string[] }>
+) {
+  const steps = spec
+    .map((st) => {
+      for (const ev of st.events) {
+        const v = counts.get(ev);
+        if (v && v > 0) return { name: st.name, value: v };
+      }
+      return null;
+    })
+    .filter((s): s is { name: string; value: number } => s != null);
+  return steps.length >= 2 ? { title, steps } : undefined;
 }
 
 // Decide what the dashboard leads with, by business type. Every GA4 call is
@@ -430,10 +450,10 @@ async function buildTailored(
         { key: "aov", label: "Avg order value", value: Number(r0.averagePurchaseRevenue || 0), format: "currency" },
       ];
       const funnel = funnelFrom(counts, "Purchase journey", [
-        ["view_item", "Viewed"],
-        ["add_to_cart", "Add to cart"],
-        ["begin_checkout", "Checkout"],
-        ["purchase", "Purchase"],
+        { name: "Viewed", events: ["view_item", "view_item_list"] },
+        { name: "Add to cart", events: ["add_to_cart"] },
+        { name: "Checkout", events: ["begin_checkout", "add_payment_info", "add_shipping_info"] },
+        { name: "Purchase", events: ["purchase", "ecommerce_purchase"] },
       ]);
       const rows = prod.map((r) => ({ name: r.dimensions.itemName || "(unknown)", value: Number(r.metrics.itemRevenue || 0) })).filter((r) => r.value > 0);
       const list = rows.length ? { title: "Top products by revenue", format: "currency" as const, rows } : undefined;
@@ -441,9 +461,10 @@ async function buildTailored(
     }
 
     if (businessType === "saas") {
-      const [m, counts] = await Promise.all([
+      const [m, counts, cohort] = await Promise.all([
         safeRows(p, { dimensions: [], metrics: ["active1DayUsers", "active7DayUsers", "active28DayUsers"], startDate: range.start, endDate: range.end, limit: 1 }),
         eventCountMap(p, range),
+        runWeeklyCohortRetention(p.accessToken, p.property.ga4_property_id, { weeks: 6 }),
       ]);
       const r0 = m[0]?.metrics ?? {};
       const dau = Number(r0.active1DayUsers || 0);
@@ -455,18 +476,20 @@ async function buildTailored(
         { key: "stickiness", label: "Stickiness (DAU/MAU)", value: mau > 0 ? (dau / mau) * 100 : 0, format: "percent" },
       ];
       const funnel = funnelFrom(counts, "Activation", [
-        ["session_start", "Sessions"],
-        ["sign_up", "Signups"],
-        ["login", "Logins"],
+        { name: "Sessions", events: ["session_start"] },
+        { name: "Signups", events: ["sign_up", "signup", "registration", "register", "complete_registration"] },
+        { name: "Logins", events: ["login", "log_in", "sign_in"] },
+        { name: "Activated", events: ["tutorial_complete", "onboarding_complete", "first_open"] },
       ]);
-      return { business_type: businessType, label, kpis, funnel };
+      return { business_type: businessType, label, kpis, funnel, cohort: cohort ?? undefined };
     }
 
     if (businessType === "content") {
-      const [m, pages, nvr] = await Promise.all([
+      const [m, pages, nvr, cohort] = await Promise.all([
         safeRows(p, { dimensions: [], metrics: ["engagedSessions", "engagementRate", "averageSessionDuration"], startDate: range.start, endDate: range.end, limit: 1 }),
         safeRows(p, { dimensions: ["pagePath"], metrics: ["engagedSessions"], startDate: range.start, endDate: range.end, limit: 6, orderBy: { metric: "engagedSessions", desc: true } }),
         safeRows(p, { dimensions: ["newVsReturning"], metrics: ["totalUsers"], startDate: range.start, endDate: range.end, limit: 5 }),
+        runWeeklyCohortRetention(p.accessToken, p.property.ga4_property_id, { weeks: 6 }),
       ]);
       const r0 = m[0]?.metrics ?? {};
       const totalU = nvr.reduce((s, r) => s + Number(r.metrics.totalUsers || 0), 0);
@@ -479,7 +502,7 @@ async function buildTailored(
       ];
       const rows = pages.map((r) => ({ name: r.dimensions.pagePath || "(unknown)", value: Number(r.metrics.engagedSessions || 0) })).filter((r) => r.value > 0);
       const list = rows.length ? { title: "Top content by engaged sessions", format: "number" as const, rows } : undefined;
-      return { business_type: businessType, label, kpis, list };
+      return { business_type: businessType, label, kpis, list, cohort: cohort ?? undefined };
     }
 
     if (businessType === "leadgen") {
@@ -492,9 +515,9 @@ async function buildTailored(
         { key: "sessions", label: "Sessions", value: sessions, format: "number" },
       ];
       const funnel = funnelFrom(counts, "Lead funnel", [
-        ["session_start", "Sessions"],
-        ["form_start", "Form start"],
-        ["generate_lead", "Lead"],
+        { name: "Sessions", events: ["session_start"] },
+        { name: "Form start", events: ["form_start", "begin_form"] },
+        { name: "Lead", events: ["generate_lead", "form_submit", "contact"] },
       ]);
       return { business_type: businessType, label, kpis, funnel };
     }

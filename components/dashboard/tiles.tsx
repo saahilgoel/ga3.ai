@@ -40,6 +40,10 @@ export type TailoredDashboard = {
     format: "number" | "currency";
     rows: Array<{ name: string; value: number }>;
   };
+  cohort?: {
+    weeks: number;
+    rows: Array<{ label: string; size: number; retention: number[] }>;
+  };
 };
 export type DashboardData = {
   range: { start: string; end: string; label: string };

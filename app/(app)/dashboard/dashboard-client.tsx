@@ -604,6 +604,56 @@ function fmtTailored(
   return format === "currency" ? `₹${n}` : n;
 }
 
+// Weekly cohort-retention heatmap — the "gold standard" retention view, made
+// readable: rows = sign-up weeks, columns = weeks since, cells shaded by % kept.
+function CohortGrid({ cohort }: { cohort: NonNullable<DashboardData["tailored"]>["cohort"] }) {
+  if (!cohort || cohort.rows.length === 0) return null;
+  const maxW = Math.max(...cohort.rows.map((r) => r.retention.length));
+  return (
+    <div className="rounded-md border border-[color:var(--border)] bg-[color:var(--bg)] p-3.5 overflow-x-auto">
+      <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)] mb-3">
+        Weekly cohort retention
+      </div>
+      <table className="w-full border-collapse text-[11px] font-mono tabular-nums">
+        <thead>
+          <tr className="text-[color:var(--text-tertiary)]">
+            <th className="text-left font-normal pb-1.5 pr-2">Week of</th>
+            <th className="text-right font-normal pb-1.5 pr-2">Users</th>
+            {Array.from({ length: maxW }).map((_, w) => (
+              <th key={w} className="text-right font-normal pb-1.5 pl-2">
+                W{w}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {cohort.rows.map((r) => (
+            <tr key={r.label}>
+              <td className="text-left text-[color:var(--text-secondary)] py-0.5 pr-2">{r.label}</td>
+              <td className="text-right text-[color:var(--text-secondary)] py-0.5 pr-2">{fmtCompactNum(r.size)}</td>
+              {Array.from({ length: maxW }).map((_, w) => {
+                const v = r.retention[w];
+                if (v == null) return <td key={w} className="py-0.5 pl-2" />;
+                const op = Math.max(0.05, Math.min(0.5, v / 200));
+                return (
+                  <td key={w} className="py-0.5 pl-2">
+                    <span
+                      className="block rounded-sm px-1 text-right text-[color:var(--text-primary)]"
+                      style={{ background: `rgba(124,107,255,${op})` }}
+                    >
+                      {v.toFixed(0)}%
+                    </span>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // The "tuned for your business" hero — the first thing the owner sees, in their
 // own language (revenue / retention / readership), above the universal metrics.
 function TailoredHero({ t }: { t: NonNullable<DashboardData["tailored"]> }) {
@@ -681,6 +731,8 @@ function TailoredHero({ t }: { t: NonNullable<DashboardData["tailored"]> }) {
             )}
           </div>
         )}
+
+        {t.cohort && <CohortGrid cohort={t.cohort} />}
       </div>
     </section>
   );
