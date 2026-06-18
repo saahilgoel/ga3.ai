@@ -424,6 +424,26 @@ function funnelFrom(
   return steps.length >= 2 ? { title, steps } : undefined;
 }
 
+// Always-available fallback funnel from session-scoped metrics, so every
+// property gets a meaningful funnel even when its type-specific events are
+// absent (e.g. a SaaS that doesn't fire sign_up/login).
+async function universalFunnel(p: PropertyWithToken, range: DashboardRange) {
+  const m = await safeRows(p, {
+    dimensions: [],
+    metrics: ["sessions", "engagedSessions", "keyEvents"],
+    startDate: range.start,
+    endDate: range.end,
+    limit: 1,
+  });
+  const r = m[0]?.metrics ?? {};
+  const steps = [
+    { name: "Sessions", value: Number(r.sessions || 0) },
+    { name: "Engaged", value: Number(r.engagedSessions || 0) },
+    { name: "Key events", value: Number(r.keyEvents || 0) },
+  ].filter((s) => s.value > 0);
+  return steps.length >= 2 ? { title: "Engagement funnel", steps } : undefined;
+}
+
 // Decide what the dashboard leads with, by business type. Every GA4 call is
 // defensive — a property missing ecommerce/SaaS tracking just yields zeros, the
 // base dashboard is unaffected.
@@ -457,7 +477,7 @@ async function buildTailored(
       ]);
       const rows = prod.map((r) => ({ name: r.dimensions.itemName || "(unknown)", value: Number(r.metrics.itemRevenue || 0) })).filter((r) => r.value > 0);
       const list = rows.length ? { title: "Top products by revenue", format: "currency" as const, rows } : undefined;
-      return { business_type: businessType, label, kpis, funnel, list };
+      return { business_type: businessType, label, kpis, funnel: funnel ?? (await universalFunnel(p, range)), list };
     }
 
     if (businessType === "saas") {
@@ -481,7 +501,7 @@ async function buildTailored(
         { name: "Logins", events: ["login", "log_in", "sign_in"] },
         { name: "Activated", events: ["tutorial_complete", "onboarding_complete", "first_open"] },
       ]);
-      return { business_type: businessType, label, kpis, funnel, cohort: cohort ?? undefined };
+      return { business_type: businessType, label, kpis, funnel: funnel ?? (await universalFunnel(p, range)), cohort: cohort ?? undefined };
     }
 
     if (businessType === "content") {
@@ -502,7 +522,7 @@ async function buildTailored(
       ];
       const rows = pages.map((r) => ({ name: r.dimensions.pagePath || "(unknown)", value: Number(r.metrics.engagedSessions || 0) })).filter((r) => r.value > 0);
       const list = rows.length ? { title: "Top content by engaged sessions", format: "number" as const, rows } : undefined;
-      return { business_type: businessType, label, kpis, list, cohort: cohort ?? undefined };
+      return { business_type: businessType, label, kpis, funnel: await universalFunnel(p, range), list, cohort: cohort ?? undefined };
     }
 
     if (businessType === "leadgen") {
@@ -519,7 +539,7 @@ async function buildTailored(
         { name: "Form start", events: ["form_start", "begin_form"] },
         { name: "Lead", events: ["generate_lead", "form_submit", "contact"] },
       ]);
-      return { business_type: businessType, label, kpis, funnel };
+      return { business_type: businessType, label, kpis, funnel: funnel ?? (await universalFunnel(p, range)) };
     }
   } catch {
     return null;
