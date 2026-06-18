@@ -27,10 +27,12 @@ import {
   BrainCircuit,
   Target,
   Eye,
+  Bot,
 } from "lucide-react";
 import { AGENTS, AGENT_MAP } from "@/lib/agents";
 import { AGENT_HEX } from "@/lib/viz";
 import { Monogram } from "@/components/monogram";
+import { PixelFace, FACES } from "@/components/landing/pixel-face";
 import { loadStalkerScore } from "@/lib/polish";
 import { SearchOverlay } from "@/components/search-overlay";
 import { cachedJSON, invalidate } from "@/lib/client-cache";
@@ -280,6 +282,14 @@ export function Sidebar({
             onClose={onMobileClose}
           />
           <NavRow
+            href="/agents"
+            icon={Bot}
+            label="Agents"
+            active={pathname === "/agents"}
+            expanded={expanded}
+            onClose={onMobileClose}
+          />
+          <NavRow
             href="/library"
             icon={Library}
             label="Library"
@@ -405,7 +415,9 @@ export function Sidebar({
                   : "text-[color:var(--text-secondary)] hover:bg-[color:var(--surface-hover)] hover:text-[color:var(--text-primary)]"
               } group`}
             >
-              <Monogram agent={a} size={20} />
+              <span className="grid place-items-center h-5 w-5 shrink-0 border border-[color:var(--border-strong)] bg-[color:var(--bg)]">
+                <PixelFace rows={FACES[a.id] ?? FACES.maya} size={16} />
+              </span>
               {expanded && (
                 <>
                   <span className="text-[12px] truncate flex-1">{a.name}</span>
