@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, readUserIds } from "@/lib/session";
 import { resolveActiveWorkspace, resolveWorkspaceWithTokens } from "@/lib/workspace";
-import { getBusinessType } from "@/lib/db";
+import { getBusinessType, setBusinessType } from "@/lib/db";
+import { classifyBusiness } from "@/lib/business-type";
+import type { SiteProfile } from "@/lib/profile";
 import {
   buildDashboard,
   computeComparison,
@@ -47,13 +49,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "no_properties" }, { status: 400 });
   }
 
+  // Resolve the business type — classify on the fly for workspaces connected
+  // before classification existed, so the tailored dashboard "just works".
+  let businessType = getBusinessType(ws.id)?.business_type ?? undefined;
+  if (!businessType && wt.properties[0]) {
+    try {
+      const prop = wt.properties[0];
+      const profile: SiteProfile | null = prop.property.site_profile_json
+        ? (JSON.parse(prop.property.site_profile_json) as SiteProfile)
+        : null;
+      const c = await classifyBusiness({
+        accessToken: prop.accessToken,
+        propertyId: prop.property.ga4_property_id,
+        siteProfile: profile,
+      });
+      setBusinessType(ws.id, c.business_type, c.confidence, c.rationale);
+      businessType = c.business_type;
+    } catch (err) {
+      console.warn("[dashboard] inline classify failed:", (err as Error).message);
+    }
+  }
+
   try {
     const data = await buildDashboard({
       active: wt.properties,
       range,
       compareRange,
       rangePresetLabel: preset,
-      businessType: getBusinessType(ws.id)?.business_type ?? undefined,
+      businessType,
     });
     CACHE.set(key, data);
     return NextResponse.json({ ...data, cached: false });

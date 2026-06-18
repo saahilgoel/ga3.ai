@@ -799,7 +799,7 @@ function NavRow({
       <Icon strokeWidth={1.5} className="size-4 shrink-0" />
       {expanded && (
         <>
-          <span className="text-[12px] font-mono lowercase tracking-[0.01em] flex-1 truncate">{label}</span>
+          <span className="text-[12px] font-mono tracking-[0.01em] flex-1 truncate">{label}</span>
           {badge != null && badge > 0 && (
             <span className="text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300">
               {badge > 99 ? "99+" : badge}
