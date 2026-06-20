@@ -1,10 +1,15 @@
 import { getDb } from "@/lib/db";
 import { getUsageContext } from "./context";
-import { anthropicCostUsd, scrapingdogCostUsd, voyageCostUsd } from "./pricing";
+import {
+  anthropicCostUsd,
+  cheapCostUsd,
+  scrapingdogCostUsd,
+  voyageCostUsd,
+} from "./pricing";
 
 type RecordArgs =
   | {
-      provider: "anthropic";
+      provider: "anthropic" | "together";
       model: string;
       inputTokens: number;
       outputTokens: number;
@@ -31,17 +36,21 @@ export function recordUsage(args: RecordArgs): void {
     let credits = 0;
     let cost = 0;
 
-    if (args.provider === "anthropic") {
-      model = args.model;
-      inputTokens = Math.max(0, Math.round(args.inputTokens || 0));
-      outputTokens = Math.max(0, Math.round(args.outputTokens || 0));
-      cost = anthropicCostUsd(model, inputTokens, outputTokens);
+    if (args.provider === "scrapingdog") {
+      credits = Math.max(0, Math.round(args.credits || 0));
+      cost = scrapingdogCostUsd(credits);
     } else if (args.provider === "voyage") {
       inputTokens = Math.max(0, Math.round(args.tokens || 0));
       cost = voyageCostUsd(inputTokens);
     } else {
-      credits = Math.max(0, Math.round(args.credits || 0));
-      cost = scrapingdogCostUsd(credits);
+      // anthropic | together (same shape, different price table)
+      model = args.model;
+      inputTokens = Math.max(0, Math.round(args.inputTokens || 0));
+      outputTokens = Math.max(0, Math.round(args.outputTokens || 0));
+      cost =
+        args.provider === "together"
+          ? cheapCostUsd(model, inputTokens, outputTokens)
+          : anthropicCostUsd(model, inputTokens, outputTokens);
     }
 
     // Skip empty rows (e.g. a 0-credit failed scrape) to keep the table clean.

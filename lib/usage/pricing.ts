@@ -10,6 +10,20 @@ const ANTHROPIC_PER_MTOK: Record<string, { in: number; out: number }> = {
 };
 const ANTHROPIC_DEFAULT = { in: 3, out: 15 };
 
+// gpt-oss on a Together-style OpenAI-compatible host. Defaults are Together's
+// list prices; if you switch host (DeepInfra/Groq) override the default via env.
+const OSS_PER_MTOK: Record<string, { in: number; out: number }> = {
+  "openai/gpt-oss-120b": { in: 0.15, out: 0.6 },
+  "openai/gpt-oss-20b": { in: 0.05, out: 0.2 },
+  // Ollama-style ids, used for local/dev smoke tests against ollama.com
+  "gpt-oss:120b": { in: 0.15, out: 0.6 },
+  "gpt-oss:20b": { in: 0.05, out: 0.2 },
+};
+const OSS_DEFAULT = {
+  in: Number(process.env.CHEAP_USD_PER_MTOK_IN || 0.15),
+  out: Number(process.env.CHEAP_USD_PER_MTOK_OUT || 0.6),
+};
+
 // voyage-3-lite is ~$0.02 / 1M tokens.
 const VOYAGE_PER_MTOK = Number(process.env.VOYAGE_USD_PER_MTOK || 0.02);
 
@@ -24,6 +38,15 @@ export function anthropicCostUsd(
   outputTokens: number
 ): number {
   const p = ANTHROPIC_PER_MTOK[model] ?? ANTHROPIC_DEFAULT;
+  return (inputTokens / 1e6) * p.in + (outputTokens / 1e6) * p.out;
+}
+
+export function cheapCostUsd(
+  model: string,
+  inputTokens: number,
+  outputTokens: number
+): number {
+  const p = OSS_PER_MTOK[model] ?? OSS_DEFAULT;
   return (inputTokens / 1e6) * p.in + (outputTokens / 1e6) * p.out;
 }
 
