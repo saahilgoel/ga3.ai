@@ -13,10 +13,13 @@ import {
   Trash2,
   MoreHorizontal,
   ArrowLeft,
+  Share2,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { MobileNavSheet } from "@/components/mobile-nav-sheet";
 import { ChatMessage } from "@/components/chat-message";
+import { ShareDialog } from "@/components/share-dialog";
 import { AgentComputer, type ToolCallItem } from "@/components/agent-computer";
 import { type SiteProfile } from "@/components/site-profile-card";
 import {
@@ -324,6 +327,11 @@ export function ChatClient({
     router.push("/feed");
   }
 
+  const [shareOpen, setShareOpen] = useState(false);
+  function downloadPdf() {
+    window.open(`/print/${conversationId}`, "_blank");
+  }
+
   async function switchAgent(newAgent: string | null) {
     setActiveAgentId(newAgent);
     activeAgentRef.current = newAgent;
@@ -469,7 +477,13 @@ export function ChatClient({
                 fill={pinned ? "currentColor" : "none"}
               />
             </button>
-            <ChatMenu onArchive={toggleArchive} onDelete={deleteConv} archived={archived} />
+            <ChatMenu
+              onArchive={toggleArchive}
+              onDelete={deleteConv}
+              onShare={() => setShareOpen(true)}
+              onDownloadPdf={downloadPdf}
+              archived={archived}
+            />
           </div>
         </div>
 
@@ -594,6 +608,11 @@ export function ChatClient({
           agentId={activeAgentId}
         />
       )}
+      <ShareDialog
+        conversationId={conversationId}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   );
 }
@@ -682,10 +701,14 @@ function AgentSwitcher({
 function ChatMenu({
   onArchive,
   onDelete,
+  onShare,
+  onDownloadPdf,
   archived,
 }: {
   onArchive: () => void;
   onDelete: () => void;
+  onShare: () => void;
+  onDownloadPdf: () => void;
   archived: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -699,10 +722,31 @@ function ChatMenu({
       </button>
       {open && (
         <div
-          className="absolute right-0 top-9 z-30 w-[160px] max-w-[calc(100vw-1.5rem)] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
+          className="absolute right-0 top-9 z-30 w-[180px] max-w-[calc(100vw-1.5rem)] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
           style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}
           onMouseLeave={() => setOpen(false)}
         >
+          <button
+            onClick={() => {
+              setOpen(false);
+              onShare();
+            }}
+            className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[color:var(--surface-hover)] text-[12px]"
+          >
+            <Share2 strokeWidth={1.5} className="size-3.5" />
+            Share link
+          </button>
+          <button
+            onClick={() => {
+              setOpen(false);
+              onDownloadPdf();
+            }}
+            className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[color:var(--surface-hover)] text-[12px]"
+          >
+            <Download strokeWidth={1.5} className="size-3.5" />
+            Download PDF
+          </button>
+          <div className="my-1 h-px bg-[color:var(--border)]" />
           <button
             onClick={() => {
               setOpen(false);

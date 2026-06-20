@@ -14,10 +14,13 @@ export function ChatMessage({
   message,
   agentId,
   onToolOpen,
+  readOnly,
 }: {
   message: UIMessage;
   agentId?: string | null;
   onToolOpen?: (id: string) => void;
+  // Share page / PDF: no agent-computer panel, so tool calls expand inline.
+  readOnly?: boolean;
 }) {
   const isUser = message.role === "user";
   const agent = agentId ? AGENT_MAP[agentId] : null;
@@ -95,7 +98,13 @@ export function ChatMessage({
             const viz = (tp.output ?? tp.input) as Visualization | undefined;
             if (!viz || !viz.kind)
               return (
-                <InlineToolCall key={i} part={tp} id={`${message.id}::${i}`} onOpen={onToolOpen} />
+                <InlineToolCall
+                  key={i}
+                  part={tp}
+                  id={`${message.id}::${i}`}
+                  onOpen={onToolOpen}
+                  forceInline={readOnly}
+                />
               );
             return (
               <div key={i} className="w-full max-w-[640px]">
@@ -119,6 +128,7 @@ export function ChatMessage({
                 part={part as ToolPart}
                 id={`${message.id}::${i}`}
                 onOpen={onToolOpen}
+                forceInline={readOnly}
               />
             );
           }

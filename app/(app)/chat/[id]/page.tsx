@@ -6,6 +6,7 @@ import {
   listConversationMessages,
 } from "@/lib/db";
 import { resolveActiveWorkspace, workspaceProperties } from "@/lib/workspace";
+import { hydrateConversation } from "@/lib/conversation-hydrate";
 import { ChatClient } from "../chat-client";
 import type { SiteProfile } from "@/components/site-profile-card";
 import type { SeedFinding } from "@/components/finding-context-card";
@@ -38,37 +39,8 @@ export default async function ConversationPage({
   if (props.length === 0) redirect("/properties");
 
   const rows = listConversationMessages(conv.id);
-  type AnyMsg = { id?: string; role?: string };
-  const initialMessages = rows
-    .map((r) => {
-      try {
-        return JSON.parse(r.content) as AnyMsg;
-      } catch {
-        return null;
-      }
-    })
-    .filter((m): m is AnyMsg => m !== null && typeof m.id === "string");
-
-  const initialMsgAgent: Array<[string, string]> = [];
-  for (const m of rows) {
-    if (m.role === "assistant" && m.author_agent_id) {
-      const parsed = (() => {
-        try {
-          return JSON.parse(m.content) as AnyMsg;
-        } catch {
-          return null;
-        }
-      })();
-      if (parsed?.id) initialMsgAgent.push([parsed.id, m.author_agent_id]);
-    }
-  }
-  if (conv.primary_agent_id) {
-    for (const m of initialMessages) {
-      if (m.role === "assistant" && !initialMsgAgent.find(([id]) => id === m.id)) {
-        initialMsgAgent.push([m.id!, conv.primary_agent_id]);
-      }
-    }
-  }
+  const { messages: initialMessages, msgAgent: initialMsgAgent } =
+    hydrateConversation(rows, conv);
 
   const properties = props.map((p) => {
     let profile: SiteProfile | null = null;

@@ -312,6 +312,9 @@ export function getDb(): Database.Database {
     "ALTER TABLE context_status ADD COLUMN business_type_confidence INTEGER",
     "ALTER TABLE context_status ADD COLUMN business_type_rationale TEXT",
     "ALTER TABLE context_status ADD COLUMN business_type_at INTEGER",
+    // v12: shareable conversations — a per-chat public read-only link token.
+    "ALTER TABLE conversations ADD COLUMN share_token TEXT",
+    "ALTER TABLE conversations ADD COLUMN shared_at INTEGER",
   ]) {
     try {
       db.exec(stmt);
@@ -1336,6 +1339,8 @@ export type ConversationRow = {
   seed_finding_id: number | null;
   created_at: number;
   last_message_at: number | null;
+  share_token: string | null;
+  shared_at: number | null;
 };
 
 export type ConversationMessageRow = {
@@ -1376,6 +1381,29 @@ export function getConversationById(id: number): ConversationRow | undefined {
   return getDb().prepare("SELECT * FROM conversations WHERE id = ?").get(id) as
     | ConversationRow
     | undefined;
+}
+
+// Public read-only sharing. A conversation is shared iff share_token is non-null.
+// The token is the only credential needed to read the transcript, so it must be
+// unguessable; callers generate it with crypto.randomBytes.
+export function setConversationShareToken(
+  id: number,
+  token: string | null
+): void {
+  getDb()
+    .prepare(
+      "UPDATE conversations SET share_token = ?, shared_at = ? WHERE id = ?"
+    )
+    .run(token, token ? Math.floor(Date.now() / 1000) : null, id);
+}
+
+export function getConversationByShareToken(
+  token: string
+): ConversationRow | undefined {
+  if (!token) return undefined;
+  return getDb()
+    .prepare("SELECT * FROM conversations WHERE share_token = ?")
+    .get(token) as ConversationRow | undefined;
 }
 
 export function listConversations(args: {

@@ -17,11 +17,15 @@ export function InlineToolCall({
   id,
   onOpen,
   active,
+  forceInline,
 }: {
   part: ToolPart;
   id?: string;
   onOpen?: (id: string) => void;
   active?: boolean;
+  // Read-only surfaces (share page, PDF) have no agent-computer panel, so the
+  // expandable detail must show inline at every breakpoint, not just on mobile.
+  forceInline?: boolean;
 }) {
   const toolName = part.type.replace(/^tool-/, "");
   const running = part.state === "input-streaming" || part.state === "input-available";
@@ -39,7 +43,7 @@ export function InlineToolCall({
         type="button"
         onClick={() => {
           setOpen((v) => !v);
-          if (id && onOpen) onOpen(id);
+          if (!forceInline && id && onOpen) onOpen(id);
         }}
         className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[color:var(--surface-hover)] tx-hover text-left"
       >
@@ -58,7 +62,11 @@ export function InlineToolCall({
         )}
       </button>
       {open && (
-        <div className="px-3 pb-2 pt-1 font-mono text-[11px] space-y-2 border-t border-[color:var(--border)] text-[color:var(--text-tertiary)] md:hidden">
+        <div
+          className={`px-3 pb-2 pt-1 font-mono text-[11px] space-y-2 border-t border-[color:var(--border)] text-[color:var(--text-tertiary)] ${
+            forceInline ? "" : "md:hidden"
+          }`}
+        >
           {part.input != null && (
             <div>
               <div className="text-[10px] uppercase tracking-[0.06em] opacity-50 mb-1">input</div>
