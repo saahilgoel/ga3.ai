@@ -72,7 +72,7 @@ export function MarkdownMessage({ content }: { content: string }) {
             if (inline) {
               return (
                 <code
-                  className="font-mono text-[13px] px-1.5 py-0.5 bg-[color:var(--surface-elevated)] rounded text-[color:var(--text-primary)]"
+                  className="font-mono text-[13px] px-1.5 py-0.5 bg-[color:var(--surface-elevated)] rounded text-[color:var(--text-primary)] break-words"
                   {...props}
                 >
                   {children}

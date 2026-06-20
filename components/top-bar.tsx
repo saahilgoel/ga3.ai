@@ -112,7 +112,7 @@ export function TopBar({ onMenu }: { onMenu?: () => void } = {}) {
           onClick={scanNow}
           disabled={scanning}
           title={scanning ? "Scanning" : "Re-scan now"}
-          className="size-8 rounded-md hover:bg-[color:var(--surface-hover)] disabled:opacity-50 tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
+          className="size-9 md:size-8 rounded-md hover:bg-[color:var(--surface-hover)] disabled:opacity-50 tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
         >
           <RefreshCw
             strokeWidth={1.5}
@@ -122,14 +122,14 @@ export function TopBar({ onMenu }: { onMenu?: () => void } = {}) {
         <button
           onClick={() => setBriefingOpen(true)}
           title="Generate Daily Briefing"
-          className="size-8 rounded-md hover:bg-[color:var(--surface-hover)] tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
+          className="size-9 md:size-8 rounded-md hover:bg-[color:var(--surface-hover)] tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)]"
         >
           <Sparkles strokeWidth={1.5} className="size-4" />
         </button>
         <Link
           href="/feed"
           title={unread > 0 ? `${unread} unread findings` : "Newsroom"}
-          className="size-8 rounded-md hover:bg-[color:var(--surface-hover)] tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] relative"
+          className="size-9 md:size-8 rounded-md hover:bg-[color:var(--surface-hover)] tx-hover flex items-center justify-center text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] relative"
         >
           <Bell strokeWidth={1.5} className="size-4" />
           {unread > 0 && (
@@ -145,13 +145,13 @@ export function TopBar({ onMenu }: { onMenu?: () => void } = {}) {
           <button
             onClick={() => setMenuOpen((v) => !v)}
             title={user?.email ?? "Account"}
-            className="size-8 rounded-full bg-[color:var(--surface-elevated)] border border-[color:var(--border-strong)] hover:bg-[color:var(--surface-hover)] tx-hover flex items-center justify-center font-mono text-[12px] font-semibold"
+            className="size-9 md:size-8 rounded-full bg-[color:var(--surface-elevated)] border border-[color:var(--border-strong)] hover:bg-[color:var(--surface-hover)] tx-hover flex items-center justify-center font-mono text-[12px] font-semibold"
           >
             {user?.initial ?? "·"}
           </button>
           {menuOpen && (
             <div
-              className="absolute right-0 top-10 z-30 w-[200px] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
+              className="absolute right-0 top-10 z-30 w-[200px] max-w-[calc(100vw-1.5rem)] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
               style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}
             >
               {user?.email && (

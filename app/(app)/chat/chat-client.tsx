@@ -639,7 +639,7 @@ function AgentSwitcher({
       </button>
       {open && (
         <div
-          className="absolute right-0 top-9 z-30 w-[180px] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
+          className="absolute right-0 top-9 z-30 w-[180px] max-w-[calc(100vw-1.5rem)] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
           style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}
         >
           <button
@@ -699,7 +699,7 @@ function ChatMenu({
       </button>
       {open && (
         <div
-          className="absolute right-0 top-9 z-30 w-[160px] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
+          className="absolute right-0 top-9 z-30 w-[160px] max-w-[calc(100vw-1.5rem)] rounded-md border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
           style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.45)" }}
           onMouseLeave={() => setOpen(false)}
         >

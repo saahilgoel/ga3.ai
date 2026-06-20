@@ -3,6 +3,7 @@ import { getSession, readUserIds } from "@/lib/session";
 import { resolveActiveWorkspace } from "@/lib/workspace";
 import { REPORTS_BY_PATH } from "@/lib/reports/registry";
 import { ReportsNav } from "@/components/reports/reports-nav";
+import { ReportsNavMobile } from "@/components/reports/reports-nav-mobile";
 import { ReportRenderer } from "@/components/reports/report-renderer";
 
 export default async function ReportPage({
@@ -22,11 +23,14 @@ export default async function ReportPage({
   // (investigatePrompt) which aren't serialisable. The client component
   // re-resolves the def from the registry.
   return (
-    <div className="flex-1 flex overflow-hidden">
-          <div className="hidden md:block">
-            <ReportsNav />
-          </div>
-          <ReportRenderer section={section} slug={report} />
-        </div>
-        );
+    <div className="flex-1 flex overflow-hidden min-w-0">
+      <div className="hidden md:block">
+        <ReportsNav />
+      </div>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <ReportsNavMobile />
+        <ReportRenderer section={section} slug={report} />
+      </div>
+    </div>
+  );
 }

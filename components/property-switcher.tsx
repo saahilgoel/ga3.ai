@@ -130,7 +130,7 @@ export function PropertySwitcher({
       </button>
       {open && (
         <div
-          className="absolute right-0 mt-1.5 z-30 w-[320px] rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden flex flex-col"
+          className="absolute right-0 mt-1.5 z-30 w-[320px] max-w-[calc(100vw-1.5rem)] rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden flex flex-col"
           style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.5)", maxHeight: "70vh" }}
         >
           <div className="p-2 border-b border-[color:var(--border)]">

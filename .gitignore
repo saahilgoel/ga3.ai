@@ -53,3 +53,6 @@ ga-chat.db
 ga-chat.db-journal
 ga-chat.db-wal
 ga-chat.db-shm
+
+# Playwright MCP screenshot artifacts
+.playwright-mcp/

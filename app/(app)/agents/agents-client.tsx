@@ -75,7 +75,7 @@ export function AgentsClient({ roster }: { roster: AgentMini[] }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5">
           {/* Roster */}
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 content-start">
+          <div className="grid grid-cols-1 gap-2 content-start">
             {roster.map((a) => {
               const isSel = a.id === selected;
               const n = unread[a.id] ?? 0;
