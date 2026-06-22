@@ -100,6 +100,10 @@ export type ReportDef = {
   // Optional: secondary query for the daily time series (when topChart is set)
   timeseriesQuery?: ReportQuery;
   layout: ReportLayout;
+  // Shown under "No data" when the table is empty — e.g. to explain GA4-side
+  // data availability (Google Signals, privacy thresholds) so a legitimate
+  // empty isn't mistaken for a bug.
+  emptyHint?: string;
   // Some reports need a custom rendering (cohort heatmap, sankey, real-time,
   // funnel viz). Render kind picks which client component is used.
   renderKind?:

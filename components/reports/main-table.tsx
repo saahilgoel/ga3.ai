@@ -9,10 +9,12 @@ export function MainTable({
   spec,
   rows,
   onInvestigateRow,
+  emptyHint,
 }: {
   spec: TableSpec;
   rows: ReportRow[];
   onInvestigateRow?: (row: ReportRow) => void;
+  emptyHint?: string;
 }) {
   const [sortIdx, setSortIdx] = useState(spec.defaultSort?.col ?? 0);
   const [sortDesc, setSortDesc] = useState(spec.defaultSort?.desc ?? true);
@@ -117,9 +119,14 @@ export function MainTable({
               <tr>
                 <td
                   colSpan={spec.columns.length}
-                  className="px-3 py-6 text-center text-[12px] text-[color:var(--text-tertiary)]"
+                  className="px-3 py-8 text-center text-[color:var(--text-tertiary)]"
                 >
-                  No data
+                  <div className="text-[13px] text-[color:var(--text-secondary)]">No data</div>
+                  {emptyHint && (
+                    <div className="mx-auto mt-1.5 max-w-[460px] text-[12px] leading-relaxed">
+                      {emptyHint}
+                    </div>
+                  )}
                 </td>
               </tr>
             )}

@@ -232,6 +232,8 @@ export const REPORTS: ReportDef[] = [
         pageSize: 50,
       },
     },
+    emptyHint:
+      "GA4 returns no age/gender here. This needs Google Signals turned on (GA4 Admin → Data Settings → Data Collection → Google Signals) AND enough traffic — Google withholds demographics below a privacy threshold, so low-traffic properties often show nothing. Geo and Devices don't need Signals and will still work.",
   }),
   r("audience", "geo", {
     title: "Geo",

@@ -290,6 +290,7 @@ function DefaultLayout({
               spec={def.layout.mainTable}
               rows={data?.rows ?? []}
               onInvestigateRow={onInvestigateRow}
+              emptyHint={def.emptyHint}
             />
           )}
         </div>
