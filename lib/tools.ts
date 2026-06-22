@@ -43,6 +43,11 @@ const COMPETITOR_SOURCE_TYPES = [
 
 const INDUSTRY_SOURCE_TYPES = ["industry_news", "industry_reddit"] as const;
 
+// Below this prior-period base (count of sessions/users/events), a percentage
+// change is statistical noise (e.g. 4 -> 34 = "+750%"). compare_periods flags
+// it so the scan reports absolute counts + low confidence instead of drama.
+const MIN_BASE = Number(process.env.SCAN_MIN_BASE || 50);
+
 export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) {
   if (active.length === 0) {
     throw new Error("makeGa4Tools requires at least one active property");
@@ -139,17 +144,26 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
           ) => {
             const out: Record<
               string,
-              { current: number; previous: number; change: number; pct: number | null }
+              {
+                current: number;
+                previous: number;
+                change: number;
+                pct: number | null;
+                low_base: boolean;
+              }
             > = {};
             for (const m of input.metrics) {
               const current = num(c[m]);
               const previous = num(p?.[m]);
               const change = current - previous;
+              // A % is only meaningful when both windows have enough volume.
+              const low_base = Math.min(current, previous) < MIN_BASE;
               out[m] = {
                 current,
                 previous,
                 change,
                 pct: previous !== 0 ? Math.round((change / previous) * 1000) / 10 : null,
+                low_base,
               };
             }
             return out;
@@ -185,6 +199,7 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
               previous,
               change,
               pct: previous !== 0 ? Math.round((change / previous) * 1000) / 10 : null,
+              low_base: Math.min(current, previous) < MIN_BASE,
             };
           }
 
@@ -198,7 +213,7 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
             dimensions: input.dimensions,
             totals,
             rows: rows.slice(0, input.limit),
-            note: "Each value is pre-computed: current vs previous, change = current - previous, pct = percent change. Report these directly; do not recompute or re-derive the period.",
+            note: `Each value is pre-computed: current vs previous, change = current - previous, pct = percent change. Report these directly; do not recompute or re-derive the period. When "low_base" is true the prior window is below ${MIN_BASE} — the percentage is noise, so report the absolute counts (e.g. "4 -> 34"), not the percent.`,
           };
         } catch (err) {
           return { error: errMsg(err) };
