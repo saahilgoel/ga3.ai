@@ -230,8 +230,8 @@ Look at this property's last 7 days vs the prior 7 days and surface the 3-5 SHAR
 
 GROUND EVERY NUMBER:
 - Every figure you state MUST come from a tool result you called in THIS scan. Never estimate, recall, or invent a number.
-- Echo the exact supporting figures into "data".
-- For any week-over-week change, query each window with its explicit dates, and state BOTH values with their direction so the period is never ambiguous (e.g. "conversion fell to 1.8% this week from 2.4% last week"). Double-check the direction of every change before reporting it.
+- For any week-over-week / period comparison, call compare_periods ONCE. It returns each metric pre-labelled current vs previous with the change and percent ALREADY computed in code — report those directly and state the direction from the sign of the change. Do NOT make two run_report calls and diff them yourself (that is how the period gets flipped). Use run_report only for single-period lookups (e.g. top landing pages this week).
+- Echo the exact supporting figures (current, previous, pct) into "data".
 - If the data is too sparse or flat to support a real finding, return FEWER findings (or []). Do not manufacture findings to hit a count.
 
 ATTRIBUTE each finding to the analyst whose lens it fits, via "agent_id":
@@ -242,9 +242,8 @@ ATTRIBUTE each finding to the analyst whose lens it fits, via "agent_id":
 - raavi: contrarian (a segment moving the other way, a misleading average)
 - vera: paid-media economics (CAC, ROAS, wasted spend) — only if ad/spend data exists
 
-DATE WINDOWS:
-- this week = startDate "7daysAgo", endDate "today"
-- prior week = startDate "14daysAgo", endDate "7daysAgo"
+DATE WINDOWS (compare_periods uses these by default):
+- current = last 7 days ("7daysAgo" → "today"); previous = the 7 days before that ("14daysAgo" → "7daysAgo").
 
 SEVERITY: high = meaningful change (>15% shift in a top metric), broken funnel, big segment surprise; medium = noteworthy pattern/opportunity; low = interesting observation.
 

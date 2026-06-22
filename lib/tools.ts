@@ -77,6 +77,135 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
       },
     }),
 
+    compare_periods: tool({
+      description:
+        "Compare a metric between two time windows in ONE call. ALWAYS use this for week-over-week / period-over-period analysis instead of two run_report calls — it returns each value pre-labelled as `current` vs `previous` with the change and percent computed for you, so the direction is never ambiguous. Defaults compare the last 7 days vs the prior 7 days. Optionally break down by dimensions (e.g. sessionDefaultChannelGroup, deviceCategory).",
+      inputSchema: z.object({
+        metrics: z
+          .array(z.string())
+          .describe('GA4 metric API names, e.g. ["sessions","conversions","totalRevenue"]'),
+        dimensions: z
+          .array(z.string())
+          .optional()
+          .default([])
+          .describe('Optional breakdown, e.g. ["sessionDefaultChannelGroup"]. Empty = totals only.'),
+        currentStartDate: z.string().optional().default("7daysAgo"),
+        currentEndDate: z.string().optional().default("today"),
+        previousStartDate: z.string().optional().default("14daysAgo"),
+        previousEndDate: z.string().optional().default("7daysAgo"),
+        limit: z.number().int().positive().max(200).optional().default(25),
+        orderBy: z
+          .object({ metric: z.string(), desc: z.boolean() })
+          .optional()
+          .describe("Sort rows by a metric's CURRENT value."),
+      }),
+      execute: async (input) => {
+        try {
+          const curArgs: RunReportArgs = {
+            dimensions: input.dimensions,
+            metrics: input.metrics,
+            startDate: input.currentStartDate,
+            endDate: input.currentEndDate,
+            limit: 500,
+            orderBy: input.orderBy,
+          };
+          const prevArgs: RunReportArgs = {
+            ...curArgs,
+            startDate: input.previousStartDate,
+            endDate: input.previousEndDate,
+          };
+          const run = (a: PropertyWithToken, q: RunReportArgs) =>
+            runReport(a.accessToken, a.property.ga4_property_id, q).catch((err) => ({
+              __error: errMsg(err),
+              __property: a.property.display_name,
+              rows: [] as ShapedReport["rows"],
+            }));
+          const [curResults, prevResults] = await Promise.all([
+            Promise.all(active.map((a) => run(a, curArgs))),
+            Promise.all(active.map((a) => run(a, prevArgs))),
+          ]);
+          const cur = mergeReports(curResults, curArgs);
+          const prev = mergeReports(prevResults, prevArgs);
+
+          const keyOf = (row: { dimensions: Record<string, string> }) =>
+            input.dimensions.map((d) => row.dimensions[d] ?? "").join("|");
+          const num = (v: string | undefined) => {
+            const n = parseFloat(v ?? "0");
+            return Number.isFinite(n) ? n : 0;
+          };
+          const compMetrics = (
+            c: Record<string, string>,
+            p: Record<string, string> | undefined
+          ) => {
+            const out: Record<
+              string,
+              { current: number; previous: number; change: number; pct: number | null }
+            > = {};
+            for (const m of input.metrics) {
+              const current = num(c[m]);
+              const previous = num(p?.[m]);
+              const change = current - previous;
+              out[m] = {
+                current,
+                previous,
+                change,
+                pct: previous !== 0 ? Math.round((change / previous) * 1000) / 10 : null,
+              };
+            }
+            return out;
+          };
+
+          const prevByKey = new Map(prev.rows.map((r) => [keyOf(r), r]));
+          const seen = new Set<string>();
+          type CompRow = {
+            dimensions: Record<string, string>;
+            metrics: ReturnType<typeof compMetrics>;
+          };
+          const rows: CompRow[] = [];
+          for (const r of cur.rows) {
+            const k = keyOf(r);
+            seen.add(k);
+            rows.push({ dimensions: r.dimensions, metrics: compMetrics(r.metrics, prevByKey.get(k)?.metrics) });
+          }
+          for (const r of prev.rows) {
+            const k = keyOf(r);
+            if (seen.has(k)) continue;
+            rows.push({ dimensions: r.dimensions, metrics: compMetrics({}, r.metrics) });
+          }
+
+          // Totals across all rows (the headline week-over-week delta), computed
+          // in code so the model never has to do the arithmetic.
+          const totals: ReturnType<typeof compMetrics> = {};
+          for (const m of input.metrics) {
+            const current = rows.reduce((s, r) => s + r.metrics[m].current, 0);
+            const previous = rows.reduce((s, r) => s + r.metrics[m].previous, 0);
+            const change = current - previous;
+            totals[m] = {
+              current,
+              previous,
+              change,
+              pct: previous !== 0 ? Math.round((change / previous) * 1000) / 10 : null,
+            };
+          }
+
+          const sortMetric = input.orderBy?.metric ?? input.metrics[0];
+          rows.sort((a, b) => (b.metrics[sortMetric]?.current ?? 0) - (a.metrics[sortMetric]?.current ?? 0));
+
+          return {
+            current_range: { startDate: input.currentStartDate, endDate: input.currentEndDate },
+            previous_range: { startDate: input.previousStartDate, endDate: input.previousEndDate },
+            metrics: input.metrics,
+            dimensions: input.dimensions,
+            totals,
+            rows: rows.slice(0, input.limit),
+            note: "Each value is pre-computed: current vs previous, change = current - previous, pct = percent change. Report these directly; do not recompute or re-derive the period.",
+          };
+        } catch (err) {
+          return { error: errMsg(err) };
+        }
+      },
+    }),
+
     run_per_property_report: tool({
       description:
         "Same as run_report but returns one row group per property with a synthetic `_property` dimension. Use this when the user wants to compare properties side-by-side, or when union sums would hide scale differences.",
