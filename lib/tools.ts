@@ -156,13 +156,18 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
               const current = num(c[m]);
               const previous = num(p?.[m]);
               const change = current - previous;
-              // A % is only meaningful when both windows have enough volume.
+              // A % is only meaningful when both windows have enough volume. Below
+              // the floor we return pct: null so the model literally cannot
+              // headline a noise figure like "+1,000%" off a base of 3.
               const low_base = Math.min(current, previous) < MIN_BASE;
               out[m] = {
                 current,
                 previous,
                 change,
-                pct: previous !== 0 ? Math.round((change / previous) * 1000) / 10 : null,
+                pct:
+                  !low_base && previous !== 0
+                    ? Math.round((change / previous) * 1000) / 10
+                    : null,
                 low_base,
               };
             }
@@ -194,12 +199,16 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
             const current = rows.reduce((s, r) => s + r.metrics[m].current, 0);
             const previous = rows.reduce((s, r) => s + r.metrics[m].previous, 0);
             const change = current - previous;
+            const low_base = Math.min(current, previous) < MIN_BASE;
             totals[m] = {
               current,
               previous,
               change,
-              pct: previous !== 0 ? Math.round((change / previous) * 1000) / 10 : null,
-              low_base: Math.min(current, previous) < MIN_BASE,
+              pct:
+                !low_base && previous !== 0
+                  ? Math.round((change / previous) * 1000) / 10
+                  : null,
+              low_base,
             };
           }
 
@@ -213,7 +222,7 @@ export function makeGa4Tools(active: PropertyWithToken[], workspaceId?: number) 
             dimensions: input.dimensions,
             totals,
             rows: rows.slice(0, input.limit),
-            note: `Each value is pre-computed: current vs previous, change = current - previous, pct = percent change. Report these directly; do not recompute or re-derive the period. When "low_base" is true the prior window is below ${MIN_BASE} — the percentage is noise, so report the absolute counts (e.g. "4 -> 34"), not the percent.`,
+            note: `Each value is pre-computed: current vs previous, change = current - previous, pct = percent change. Report these directly; do not recompute or re-derive the period. When "low_base" is true the window is below ${MIN_BASE} and pct is deliberately null — the percentage would be noise. Report ONLY the absolute counts (e.g. "33 sessions, up from 3"); never compute or state a percentage for a low_base metric.`,
           };
         } catch (err) {
           return { error: errMsg(err) };

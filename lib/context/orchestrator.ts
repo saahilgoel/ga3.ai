@@ -996,11 +996,12 @@ export async function refreshSource(args: {
       : {}),
   });
 
-  // Onboarding + RAG just finished → launch the first focused scan so the
-  // newsroom lands populated with sharp, business-aware insights. maybeAutoScan
-  // self-gates (no-ops if a scan ran in the last 24h), so calling it on every
-  // ready transition is safe. Dynamic import avoids load-order coupling.
+  // Onboarding + RAG just finished → launch the FIRST focused scan so the
+  // newsroom lands populated. initialOnly = fire once only if never scanned:
+  // refreshSource also runs for periodic industry/competitor refreshes, and
+  // without this gate those background refreshes would keep re-triggering scans.
+  // All later refreshes happen on app open. Dynamic import avoids coupling.
   import("../scan")
-    .then(({ maybeAutoScan }) => maybeAutoScan(args.workspace_id))
+    .then(({ maybeAutoScan }) => maybeAutoScan(args.workspace_id, { initialOnly: true }))
     .catch(() => {});
 }

@@ -237,8 +237,8 @@ GROUND EVERY NUMBER:
 THINK LIKE A SENIOR ANALYST (this is what separates a useful insight from a metric printout):
 - Materiality bar: only surface a change that actually MATTERS — it needs both meaningful volume AND a meaningful move. A 40% swing on 5 sessions is noise; a 6% drop on 80,000 sessions is a fire. Rank by business impact (revenue, conversions, large segments), never by how big the percentage looks.
 - Always anchor a percentage to its absolute counts: "conversions fell to 88 from 149 (-41%)", never a bare "-41%". A number without its base is not an insight.
-- Low base = low confidence: when compare_periods marks a metric "low_base": true, the prior window was too small for the percentage to mean anything. Do NOT headline the percent — report the raw counts ("34 sessions, up from 4 last week"), call it an early/low-confidence signal, and never rate it "high" severity.
-- Low-traffic property: if overall weekly sessions are very low (a few hundred or fewer), say that plainly in plain language, skip the percentage drama entirely, and give the single most useful, concrete next step for a site at this stage.
+- Low base = low confidence: when compare_periods marks a metric "low_base": true, its pct is null on purpose — the base is too small for a percentage to mean anything. NEVER state or compute a percentage for it (no "+1,000%"); report only the raw counts ("33 sessions, up from 3 last week"), call it an early/low-confidence signal, and never rate it "high" severity.
+- Pre-traction / very low traffic: if sessions is low_base (the whole property is tiny — a few dozen sessions a week), do NOT generate 4-5 dramatic findings. Produce AT MOST 2, severity "low", no percentages at all. Say plainly that the site is at very low volume so week-over-week swings aren't yet meaningful, and give the single most useful concrete next step to build real traffic. One honest "you're pre-traction, here's the one lever" beats five fake fires.
 - End every finding with the so-what — the implication or the specific lever to pull. A real analyst tells you what to DO, not just what moved.
 
 ATTRIBUTE each finding to the analyst whose lens it fits, via "agent_id":
@@ -307,12 +307,22 @@ function archivePriorFindings(workspaceId: number, userId: number): void {
 }
 
 /**
- * Lazy, gated auto-scan. Safe to call on every app open: it fires a scan only
- * when (a) onboarding + RAG context is ready, and (b) there's no scan yet or the
- * last one is >24h old (daily cache). runScan's own lock dedupes concurrency.
- * Fire-and-forget — it streams progress over SSE.
+ * Lazy, gated auto-scan. Requires onboarding + RAG context to be ready.
+ *
+ * - App-open (default): refresh if there's no scan yet or the last is >24h old.
+ * - initialOnly (the context-ready trigger): fire ONCE, only if the workspace
+ *   has never been scanned. This is critical — the context-ready hook lives in a
+ *   generic source-refresh path that the scheduler also runs for periodic
+ *   industry/competitor refreshes, so without this gate those background
+ *   refreshes would re-trigger scans on their own. Recurring scans happen on
+ *   app open only; the background only ever does the one first launch.
+ *
+ * runScan's own lock dedupes concurrency. Fire-and-forget — streams over SSE.
  */
-export function maybeAutoScan(workspaceId: number): void {
+export function maybeAutoScan(
+  workspaceId: number,
+  opts: { initialOnly?: boolean } = {}
+): void {
   try {
     const ws = getWorkspaceById(workspaceId);
     if (!ws || ws.archived) return;
@@ -323,8 +333,12 @@ export function maybeAutoScan(workspaceId: number): void {
       (ctx.chunk_count ?? 0) > 0;
     if (!ready) return; // don't scan until the business context exists
     const last = ws.last_scan_at ?? 0;
-    const ageS = Math.floor(Date.now() / 1000) - last;
-    if (last && ageS < 24 * 3600) return; // daily cache
+    if (opts.initialOnly) {
+      if (last) return; // already scanned once — never re-fire from the background
+    } else {
+      const ageS = Math.floor(Date.now() / 1000) - last;
+      if (last && ageS < 24 * 3600) return; // daily cache
+    }
     void runScan({ workspace_id: workspaceId }).catch(() => {});
   } catch {
     // best-effort
