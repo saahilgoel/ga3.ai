@@ -1,7 +1,9 @@
 import { getDb } from "./db";
-import { runScan } from "./scan";
 
-const SCAN_INTERVAL_MIN = 240; // 4 hours
+// Autonomous scans are NO LONGER run on a blind timer. They fire (a) when a
+// workspace's onboarding + RAG context becomes ready, and (b) lazily on app
+// open if >24h stale — see maybeAutoScan() in ./scan. This scheduler only keeps
+// the cheap, periodic context refreshes (industry signals, competitor ads).
 const INDUSTRY_INTERVAL_S = 24 * 60 * 60; // 24h
 const TICK_INTERVAL_MS = 30 * 60_000;
 
@@ -43,18 +45,6 @@ async function tick() {
   for (const w of rows) {
     if (seenUsers.has(w.user_id)) continue; // only the top (most-recently-used) workspace per user
     seenUsers.add(w.user_id);
-
-    const sinceScan = w.last_scan_at ? nowS - w.last_scan_at : Infinity;
-    if (sinceScan >= SCAN_INTERVAL_MIN * 60) {
-      try {
-        console.log(
-          `[scheduler] scanning workspace ${w.id} (${w.name}) for user ${w.user_id} (${w.email})`
-        );
-        await runScan({ workspace_id: w.id });
-      } catch (err) {
-        console.error(`[scheduler] scan failed for workspace ${w.id}:`, err);
-      }
-    }
 
     // Industry refresh — only on the top workspace per user. Cheap (~5 credits)
     // so we don't gate behind scan cadence.

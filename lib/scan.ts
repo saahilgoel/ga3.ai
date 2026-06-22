@@ -3,7 +3,7 @@ import { runWithUsage } from "@/lib/usage/context";
 import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 import crypto from "node:crypto";
-import { AGENTS, Agent } from "./agents";
+import { AGENTS } from "./agents";
 import { makeGa4Tools } from "./tools";
 import { makeGoogleAdsTools } from "./sources/google_ads/tools";
 import { makeMoEngageTools } from "./sources/moengage/tools";
@@ -12,11 +12,15 @@ import { publish } from "./pubsub";
 import {
   getDb,
   getWorkspaceById,
+  getBusinessType,
   insertFinding,
   setWorkspaceLastScanAt,
   type FindingRow,
   type WorkspaceRow,
 } from "./db";
+import { getContextStatus } from "./context/db-helpers";
+import { BUSINESS_TYPE_LABEL, BUSINESS_TYPE_LENS } from "./business-type";
+import type { BusinessType } from "./business-type";
 import {
   parseWorkspacePropertyIds,
   resolveWorkspaceWithTokens,
@@ -28,16 +32,25 @@ import { SiteProfile } from "./profile";
 import { stripEmojis } from "./strip-emojis";
 import { getWorkspaceContextSummary } from "./context/summary";
 
+const AGENT_IDS = AGENTS.map((a) => a.id);
+const DEFAULT_AGENT = AGENT_IDS[0] ?? "maya";
+
 const RawFindingSchema = z.object({
   title: z.string().min(3),
   body: z.string().min(3),
   severity: z.enum(["high", "medium", "low"]),
+  // The focused scan assigns each finding to the analyst whose lens it fits.
+  agent_id: z.string().optional().nullable(),
   data: z.unknown().optional().nullable(),
   visualization: vizSchema.nullable().optional(),
   question: z.string().nullable().optional(),
   source_property_ids: z.array(z.number()).optional().nullable(),
 });
 type RawFinding = z.infer<typeof RawFindingSchema>;
+
+// One scan can produce at most this many findings — the newsroom stays a sharp,
+// scannable set, not a 30-finding dump.
+const MAX_FINDINGS = 5;
 
 type ScanLockEntry = { startedAt: number; promise: Promise<ScanResult> };
 const scanLocks = new Map<number, ScanLockEntry>();
@@ -125,21 +138,18 @@ async function doScan(ws: WorkspaceRow): Promise<ScanResult> {
   });
   const tools = { ...ga4Tools, ...adsTools, ...moeTools };
 
-  publishScanProgress(ws, "Running agents", 10);
-  let agentsDone = 0;
-  const agentResults = await Promise.all(
-    AGENTS.map((a) =>
-      runAgentScan(a, tools, baseSystem).then((findings) => {
-        agentsDone += 1;
-        const pct = 10 + Math.round((agentsDone / AGENTS.length) * 75);
-        publishScanProgress(ws, `Analyzing · ${a.name}`, pct, a.id);
-        return findings;
-      })
-    )
-  );
+  const bt = getBusinessType(ws.id);
+  const businessType = (bt?.business_type as BusinessType | null) ?? "other";
+
+  publishScanProgress(ws, "Analyzing your analytics", 20);
+  const raw = await runFocusedScan(tools, baseSystem, businessType, ctxSummary.summary);
+  publishScanProgress(ws, "Ranking the sharpest insights", 88);
 
   const sig = propertySignature(propertyIds);
-  const all = agentResults.flat();
+  // This scan replaces the previous newsroom set. Pins live in pinned_insights
+  // and are untouched; we only archive prior auto-findings for this workspace.
+  archivePriorFindings(ws.id, ws.user_id);
+  const all = raw.slice(0, MAX_FINDINGS);
   const inserted: FindingRow[] = [];
   for (const item of all) {
     try {
@@ -196,42 +206,61 @@ async function doScan(ws: WorkspaceRow): Promise<ScanResult> {
   return { scan_id, findings: inserted };
 }
 
-async function runAgentScan(
-  agent: Agent,
+// One focused, business-type-aware pass. Replaces the old 6-agent fan-out:
+// instead of every persona dumping 1-3 findings (→ 30-40 piling up), the lead
+// analyst surfaces the 3-5 sharpest, category-relevant insights, each attributed
+// to the persona whose lens it fits.
+async function runFocusedScan(
   tools: ReturnType<typeof makeGa4Tools>,
-  baseSystem: string
+  baseSystem: string,
+  businessType: BusinessType,
+  contextSummary: string
 ): Promise<Array<RawFinding & { agent_id: string }>> {
+  const label = BUSINESS_TYPE_LABEL[businessType];
+  const lens = BUSINESS_TYPE_LENS[businessType];
+
   const system = `${baseSystem}
 
-PERSONA: ${agent.systemPromptAddendum}
+BUSINESS TYPE: this is a ${label}. The metrics that matter most here are: ${lens}.${
+    contextSummary ? `\nWhat we know about the brand:\n${contextSummary}` : ""
+  }
 
-AUTONOMOUS SCAN TASK:
-This is an autonomous scan. You have NOT been asked a specific question.
-Your job: look at this property's data and surface 1-3 findings YOUR LENS would catch.
+YOUR TASK — focused autonomous scan (you are the lead analyst):
+Look at this property's last 7 days vs the prior 7 days and surface the 3-5 SHARPEST, most decision-relevant findings for a ${label}. Quality over quantity — a few sharp findings beat many shallow ones. Rank them most-important first, and NEVER return more than ${MAX_FINDINGS}. Focus on what matters for a ${label} (${lens}); ignore vanity metrics.
 
-Compare the last 7 days (startDate "7daysAgo", endDate "today") vs the prior 7 days (startDate "14daysAgo", endDate "7daysAgo"). Look at week-over-week shifts in YOUR domain.
+GROUND EVERY NUMBER:
+- Every figure you state MUST come from a tool result you called in THIS scan. Never estimate, recall, or invent a number.
+- Echo the exact supporting figures into "data".
+- For any week-over-week change, query each window with its explicit dates, and state BOTH values with their direction so the period is never ambiguous (e.g. "conversion fell to 1.8% this week from 2.4% last week"). Double-check the direction of every change before reporting it.
+- If the data is too sparse or flat to support a real finding, return FEWER findings (or []). Do not manufacture findings to hit a count.
 
-Call run_report and other tools as needed. Be thorough — you have up to 5 tool calls.
+ATTRIBUTE each finding to the analyst whose lens it fits, via "agent_id":
+- maya: acquisition & channel mix (source/medium, paid vs organic, channel ROI)
+- arjun: funnel & drop-off (journey, abandonment, checkout/signup friction)
+- priya: retention & engagement (returning users, cohorts, frequency, depth)
+- kabir: audience & geography (demographics, geo, device, untapped segments)
+- raavi: contrarian (a segment moving the other way, a misleading average)
+- vera: paid-media economics (CAC, ROAS, wasted spend) — only if ad/spend data exists
 
-Severity calibration:
-- high: meaningful change (>15% shift in a top-5 metric), broken funnel, large segment surprise
-- medium: noteworthy pattern, opportunity worth investigating
-- low: interesting observation, no urgent action
+DATE WINDOWS:
+- this week = startDate "7daysAgo", endDate "today"
+- prior week = startDate "14daysAgo", endDate "7daysAgo"
 
-DO NOT call render_visualization. Instead, when a chart would help, include a "visualization" object in the finding.
+SEVERITY: high = meaningful change (>15% shift in a top metric), broken funnel, big segment surprise; medium = noteworthy pattern/opportunity; low = interesting observation.
 
-If nothing in your domain is notable enough, return [] — do not manufacture findings.
+DO NOT call render_visualization. Include a "visualization" object in the finding when a chart helps. Use up to 12 tool calls.
 
-After your queries, respond with ONLY a single JSON code block:
+After your queries, respond with ONLY one JSON code block:
 \`\`\`json
 [
   {
+    "agent_id": "maya|arjun|priya|kabir|raavi|vera",
     "title": "<=12 words",
     "body": "2-3 sentences with specific numbers and the comparison period",
     "severity": "high"|"medium"|"low",
-    "data": { /* small JSON snapshot of the numbers backing the finding */ },
+    "data": { /* the exact numbers from your tool calls backing this finding */ },
     "visualization": null | { "kind": "bar|line|pie|kpi|funnel|table", "title": "...", "data"|"primary"|"steps"|"columns"|"rows": ... },
-    "question": null | "<=15 word follow-up question to ask the user, or null",
+    "question": null | "<=15 word follow-up question, or null",
     "source_property_ids": null | [property_db_id, ...]
   }
 ]
@@ -242,14 +271,57 @@ No prose outside the code block.`;
     const { text } = await generateText({
       model: trackedModel("claude-sonnet-4-6", "scan"),
       system,
-      prompt: "Run your scan now. Query the data, then return JSON.",
+      prompt: "Run your focused scan now. Query the data, then return the ranked JSON.",
       tools,
-      stopWhen: stepCountIs(6),
+      stopWhen: stepCountIs(12),
     });
-    return extractFindings(text).map((f) => ({ ...f, agent_id: agent.id }));
+    return extractFindings(text).map((f) => ({
+      ...f,
+      agent_id:
+        f.agent_id && AGENT_IDS.includes(f.agent_id) ? f.agent_id : DEFAULT_AGENT,
+    }));
   } catch (err) {
-    console.warn(`[scan] agent=${agent.id} failed:`, errMsg(err));
+    console.warn(`[scan] focused scan failed:`, errMsg(err));
     return [];
+  }
+}
+
+// Archive the prior auto-findings for a workspace so the newest scan's set
+// replaces them in the newsroom. Pins live in a separate table and survive.
+function archivePriorFindings(workspaceId: number, userId: number): void {
+  try {
+    getDb()
+      .prepare(
+        "UPDATE findings SET status = 'archived' WHERE workspace_id = ? AND user_id = ? AND status != 'archived'"
+      )
+      .run(workspaceId, userId);
+  } catch (err) {
+    console.warn("[scan] archivePriorFindings failed:", errMsg(err));
+  }
+}
+
+/**
+ * Lazy, gated auto-scan. Safe to call on every app open: it fires a scan only
+ * when (a) onboarding + RAG context is ready, and (b) there's no scan yet or the
+ * last one is >24h old (daily cache). runScan's own lock dedupes concurrency.
+ * Fire-and-forget — it streams progress over SSE.
+ */
+export function maybeAutoScan(workspaceId: number): void {
+  try {
+    const ws = getWorkspaceById(workspaceId);
+    if (!ws || ws.archived) return;
+    const ctx = getContextStatus(workspaceId);
+    const ready =
+      !!ctx &&
+      (ctx.status === "ready" || ctx.status === "partial") &&
+      (ctx.chunk_count ?? 0) > 0;
+    if (!ready) return; // don't scan until the business context exists
+    const last = ws.last_scan_at ?? 0;
+    const ageS = Math.floor(Date.now() / 1000) - last;
+    if (last && ageS < 24 * 3600) return; // daily cache
+    void runScan({ workspace_id: workspaceId }).catch(() => {});
+  } catch {
+    // best-effort
   }
 }
 

@@ -995,4 +995,12 @@ export async function refreshSource(args: {
       ? { last_news_refresh_at: Math.floor(Date.now() / 1000) }
       : {}),
   });
+
+  // Onboarding + RAG just finished → launch the first focused scan so the
+  // newsroom lands populated with sharp, business-aware insights. maybeAutoScan
+  // self-gates (no-ops if a scan ran in the last 24h), so calling it on every
+  // ready transition is safe. Dynamic import avoids load-order coupling.
+  import("../scan")
+    .then(({ maybeAutoScan }) => maybeAutoScan(args.workspace_id))
+    .catch(() => {});
 }

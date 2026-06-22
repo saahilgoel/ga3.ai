@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession, readUserIds } from "@/lib/session";
 import { resolveActiveWorkspace, workspaceProperties } from "@/lib/workspace";
+import { maybeAutoScan } from "@/lib/scan";
 import { DashboardClient } from "./dashboard-client";
 
 type SP = {
@@ -20,6 +21,8 @@ export default async function DashboardPage({
   if (userIds.length === 0) redirect("/");
   const ws = resolveActiveWorkspace(session);
   if (!ws) redirect("/properties");
+  // Lazy daily refresh of the newsroom (self-gated: only if context ready + >24h).
+  maybeAutoScan(ws.id);
   const props = workspaceProperties(ws);
   const sp = await searchParams;
   return (

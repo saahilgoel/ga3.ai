@@ -24,6 +24,7 @@ export async function GET() {
     .prepare(
       `SELECT * FROM findings
        WHERE workspace_id = ? AND user_id IN (${userPlaceholders})
+         AND status != 'archived'
        ORDER BY created_at DESC
        LIMIT 100`
     )
