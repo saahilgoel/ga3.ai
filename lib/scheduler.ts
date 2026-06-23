@@ -1,13 +1,18 @@
-import { getDb } from "./db";
+import { getDb, purgeOldFindings } from "./db";
 
 // Autonomous scans are NO LONGER run on a blind timer. They fire (a) when a
 // workspace's onboarding + RAG context becomes ready, and (b) lazily on app
 // open if >24h stale — see maybeAutoScan() in ./scan. This scheduler only keeps
-// the cheap, periodic context refreshes (industry signals, competitor ads).
+// the cheap, periodic context refreshes (industry signals, competitor ads) and
+// a daily findings-retention sweep.
 const INDUSTRY_INTERVAL_S = 24 * 60 * 60; // 24h
 const TICK_INTERVAL_MS = 30 * 60_000;
+const PURGE_INTERVAL_MS = 23 * 60 * 60_000; // ~daily
+const RETENTION_DAYS = Number(process.env.FINDINGS_RETENTION_DAYS || 30);
+const MAX_FINDINGS_PER_WS = Number(process.env.FINDINGS_MAX_PER_WORKSPACE || 50);
 
 let started = false;
+let lastPurge = 0;
 
 export function startScheduler() {
   if (started) return;
@@ -22,6 +27,20 @@ export function startScheduler() {
 async function tick() {
   const db = getDb();
   const nowS = Math.floor(Date.now() / 1000);
+
+  // Daily retention sweep so the findings corpus stays bounded (age + per-ws cap).
+  if (Date.now() - lastPurge >= PURGE_INTERVAL_MS) {
+    lastPurge = Date.now();
+    try {
+      const removed = purgeOldFindings({
+        retentionDays: RETENTION_DAYS,
+        perWorkspaceCap: MAX_FINDINGS_PER_WS,
+      });
+      if (removed > 0) console.log(`[scheduler] purged ${removed} old findings`);
+    } catch (err) {
+      console.warn("[scheduler] findings purge failed:", (err as Error).message);
+    }
+  }
 
   // In v4, only the most-recently-used workspace per user is "active" for autonomous scans.
   // This caps cost: a user with 8 workspaces only ever has one scanning on schedule.

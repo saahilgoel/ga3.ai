@@ -454,6 +454,22 @@ export async function buildIndustrySignals(args: {
       const propertyIds = parseWorkspacePropertyIds(ws);
       const sig = propertySignature(propertyIds);
       const scan_id = `industry-${crypto.randomUUID()}`;
+      // Supersede prior-run industry signals (older than this run) so the
+      // newsroom shows the latest market read, not every day's. Findings just
+      // inserted in this run are <1h old and untouched; pins are kept.
+      try {
+        getDb()
+          .prepare(
+            `UPDATE findings SET status = 'archived'
+             WHERE user_id = ? AND property_signature = ?
+               AND status NOT IN ('archived', 'pinned')
+               AND scan_id LIKE 'industry-%'
+               AND created_at < unixepoch() - 3600`
+          )
+          .run(ws.user_id, sig);
+      } catch {
+        // best-effort
+      }
       const inserted = insertFinding({
         user_id: ws.user_id,
         agent_id: "raavi",

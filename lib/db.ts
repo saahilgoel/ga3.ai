@@ -974,6 +974,38 @@ export function insertFinding(args: {
     .get(result.lastInsertRowid) as FindingRow;
 }
 
+/**
+ * Bound the findings corpus so it never grows without limit. Two passes, both
+ * sparing pinned findings:
+ *   1. age — delete non-pinned findings older than `retentionDays`.
+ *   2. cap — per workspace, keep only the newest `perWorkspaceCap` non-pinned.
+ * Hard delete (not archive) so the DB itself stays bounded. Returns rows removed.
+ */
+export function purgeOldFindings(
+  opts: { retentionDays?: number; perWorkspaceCap?: number } = {}
+): number {
+  const retentionDays = opts.retentionDays ?? 30;
+  const cap = opts.perWorkspaceCap ?? 50;
+  const db = getDb();
+  const cutoff = Math.floor(Date.now() / 1000) - retentionDays * 86400;
+  let deleted = db
+    .prepare("DELETE FROM findings WHERE status != 'pinned' AND created_at < ?")
+    .run(cutoff).changes;
+  deleted += db
+    .prepare(
+      `DELETE FROM findings WHERE id IN (
+         SELECT id FROM (
+           SELECT id, ROW_NUMBER() OVER (
+             PARTITION BY workspace_id ORDER BY created_at DESC
+           ) AS rn
+           FROM findings WHERE status != 'pinned'
+         ) WHERE rn > ?
+       )`
+    )
+    .run(cap).changes;
+  return deleted;
+}
+
 export function updateFindingStatus(args: {
   id: number;
   user_ids: number[];

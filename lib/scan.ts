@@ -292,13 +292,18 @@ No prose outside the code block.`;
   }
 }
 
-// Archive the prior auto-findings for a workspace so the newest scan's set
-// replaces them in the newsroom. Pins live in a separate table and survive.
+// Archive the prior GA4-scan findings for a workspace so the newest scan's set
+// replaces them in the newsroom. Scoped to GA4 findings only: industry/market
+// signals (scan_id LIKE 'industry-%') have their own lifecycle, and pinned
+// findings are always kept.
 function archivePriorFindings(workspaceId: number, userId: number): void {
   try {
     getDb()
       .prepare(
-        "UPDATE findings SET status = 'archived' WHERE workspace_id = ? AND user_id = ? AND status != 'archived'"
+        `UPDATE findings SET status = 'archived'
+         WHERE workspace_id = ? AND user_id = ?
+           AND status NOT IN ('archived', 'pinned')
+           AND (scan_id IS NULL OR scan_id NOT LIKE 'industry-%')`
       )
       .run(workspaceId, userId);
   } catch (err) {
